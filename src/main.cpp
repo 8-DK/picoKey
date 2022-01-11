@@ -42,7 +42,7 @@ void vTaskCode1( void * pvParameters )
 int main() {
 
   board_init();
-  tusb_init();
+  
 BaseType_t xReturned;
 TaskHandle_t xHandle = NULL;
 TaskHandle_t xHandle1 = NULL;

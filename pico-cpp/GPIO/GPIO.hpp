@@ -27,13 +27,17 @@ namespace pico_cpp
            const bool pinStatus = gpio_get (pin_number);
            gpio_put(pin_number,!pinStatus);
         }
-           void set_high() const
+        void set_high() const
         {
            gpio_put(pin_number,1);
         }
-                   void set_low() const
+        void set_low() const
         {
            gpio_put(pin_number,0);
+        }
+        bool get() const
+        {
+           return gpio_get (pin_number);
         }
 
 

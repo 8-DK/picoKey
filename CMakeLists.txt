@@ -13,6 +13,7 @@ pico_sdk_init()
 add_executable(picoKey
     src/main.cpp
     src/usbHelper.cpp 
+    src/keyHelper.cpp 
 )
 
 target_sources(picoKey PUBLIC ${CMAKE_CURRENT_LIST_DIR}/src/usb_descriptors.c)

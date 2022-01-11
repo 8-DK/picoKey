@@ -1,10 +1,22 @@
+/*
+ * File: usbHelper.cpp
+ * Project: picoKey
+ * File Created: Tuesday, 11th January 2022 9:51:11 pm
+ * Author: Dhananjay Khairnar (khairnardm@gmail.com)
+ * -----
+ * Last Modified: Wednesday, 12th January 2022 12:08:32 am
+ * Modified By: 8-DK (khairnardm@gmail.com>)
+ * -----
+ * Copyright 2021 - 2022 https://github.com/8-DK
+ */
+
 #include "usbHelper.h"
 
 uint32_t USBHelper::blink_interval_ms = BLINK_NOT_MOUNTED;
 
 USBHelper::USBHelper()
 {
-
+  tusb_init();
 }
 
 //--------------------------------------------------------------------+

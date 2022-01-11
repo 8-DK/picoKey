@@ -1,3 +1,15 @@
+/*
+ * File: usbHelper.h
+ * Project: picoKey
+ * File Created: Tuesday, 11th January 2022 9:51:37 pm
+ * Author: Dhananjay Khairnar (khairnardm@gmail.com)
+ * -----
+ * Last Modified: Wednesday, 12th January 2022 12:08:37 am
+ * Modified By: 8-DK (khairnardm@gmail.com>)
+ * -----
+ * Copyright 2021 - 2022 https://github.com/8-DK
+ */
+
 #ifndef __USBHELPER__
 #define __USBHELPER__
 #include <iostream>
