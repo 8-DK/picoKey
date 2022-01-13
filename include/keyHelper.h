@@ -12,8 +12,8 @@
 
 #ifndef __KEYHELPER__
 #define __KEYHELPER__
-#include "GPIO.hpp"
 
+#include "common.h"
 
 #define KEY_PORT 0
 #define KEY_1_PIN 16
@@ -26,13 +26,22 @@
 #define TOTAL_KEY_COUNT 6
 
 class KeyHelper{
-
+    
+    static KeyHelper *instance;
 public: 
-    int pinNums[TOTAL_KEY_COUNT] = {KEY_1_PIN,KEY_2_PIN,KEY_3_PIN,KEY_4_PIN,KEY_5_PIN,KEY_6_PIN};
-    pico_cpp::GPIO_Pin *m_keys[TOTAL_KEY_COUNT];
+    static auto *getInstance() {
+        if (!instance)
+            instance = new KeyHelper;
+        return instance;
+    }
+
+    static int pinNums[TOTAL_KEY_COUNT];
+    static pico_cpp::GPIO_Pin *m_keys[TOTAL_KEY_COUNT];
 
     KeyHelper();
     bool readKeyPress(int keyNum);
+    static void initKey();
+    static void keyTask( void * pvParameters );
     
 };
 

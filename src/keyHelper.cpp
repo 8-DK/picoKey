@@ -14,15 +14,33 @@
 
 //Singletone
 
+KeyHelper *KeyHelper::instance = 0;
+
+int KeyHelper::pinNums[TOTAL_KEY_COUNT] = {KEY_1_PIN,KEY_2_PIN,KEY_3_PIN,KEY_4_PIN,KEY_5_PIN,KEY_6_PIN};
+pico_cpp::GPIO_Pin *KeyHelper::m_keys[TOTAL_KEY_COUNT];
+
 KeyHelper::KeyHelper()
-{
-    for(int i=0 ; i<TOTAL_KEY_COUNT ;i++)
-    {
-        m_keys[i] = new pico_cpp::GPIO_Pin(pinNums[i],pico_cpp::PinType::Input);
-    }    
+{ 
 }
 
 bool KeyHelper::readKeyPress(int keyNum)
 {   
     return  m_keys[keyNum]->get();
+}
+
+void KeyHelper::initKey()
+{
+    for(int i=0 ; i<TOTAL_KEY_COUNT ;i++)
+    {
+        m_keys[i] = new pico_cpp::GPIO_Pin(pinNums[i],pico_cpp::PinType::Input);
+    }  
+}
+
+void KeyHelper::keyTask( void * pvParameters )
+{
+    initKey();
+    while(1)
+    {
+         vTaskDelay(1000 / portTICK_PERIOD_MS);
+    }
 }
