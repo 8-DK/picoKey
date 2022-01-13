@@ -11,8 +11,11 @@
  */
 
 #include "mainApp.h"
+#include "EEPROM.h"
 
-MainApp::MainApp(/* args */)
+MainApp *MainApp::instance = nullptr;
+
+MainApp::MainApp()
 {
 }
 

@@ -16,10 +16,14 @@
 
 class MainApp
 {
-private:
-    /* data */
-public:
-    MainApp(/* args */);
+    static MainApp *instance;
+public: 
+    static auto *getInstance() {
+        if (!instance)
+            instance = new MainApp;
+        return instance;
+    }
+    MainApp();
     ~MainApp();
     static void mainApp( void * pvParameters );
 };

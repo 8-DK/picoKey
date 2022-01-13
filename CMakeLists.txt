@@ -5,6 +5,7 @@ cmake_minimum_required(VERSION 3.12)
 include(pico-sdk/pico_sdk_init.cmake)
 add_subdirectory(pico-cpp)
 project(picoKey)
+add_subdirectory(lib)
 
 # initialize the Pico SDK
 pico_sdk_init()
@@ -42,9 +43,11 @@ target_include_directories(FreeRTOS PUBLIC FreeRTOS-Kernel/include include/ Free
 
 # create map/bin/hex/uf2 file in addition to ELF.
 pico_add_extra_outputs(picoKey)
-target_link_libraries(picoKey PUBLIC pico_stdlib tinyusb_device tinyusb_board FreeRTOS pico-cpp hardware_i2c)
+target_link_libraries(picoKey PUBLIC pico_stdlib tinyusb_device tinyusb_board FreeRTOS pico-cpp hardware_i2c libeeprom)
 add_custom_command(TARGET picoKey
         POST_BUILD
         COMMAND arm-none-eabi-size picoKey.elf
         )
+
+pico_enable_stdio_usb(picoKey 1)
 # rest of your project

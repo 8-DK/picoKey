@@ -8,35 +8,9 @@
 
 LedHelper *m_ledHlpr = LedHelper::getInstance();
 KeyHelper *m_keyHlpr = KeyHelper::getInstance();
-
-
-static pico_cpp::GPIO_Pin ledPin(25,pico_cpp::PinType::Output);
-void vTaskCode( void * pvParameters )
-{
-    /* The parameter value is expected to be 1 as 1 is passed in the
-    pvParameters value in the call to xTaskCreate() below. 
-    configASSERT( ( ( uint32_t ) pvParameters ) == 1 );
-    */
-    for( ;; )
-    {
-            ledPin.set_high();
-            vTaskDelay(1000);
-            ledPin.set_low();
-            vTaskDelay(1000);
-    }
-}
-
-void vTaskCode1( void * pvParameters )
-{
-    /* The parameter value is expected to be 1 as 1 is passed in the
-    pvParameters value in the call to xTaskCreate() below. 
-    configASSERT( ( ( uint32_t ) pvParameters ) == 1 );
-    */
-    for( ;; )
-    {
-      // USBHelper::usbMainTask((void*)0);
-    }
-}
+USBHelper *m_usbHlpr = USBHelper::getInstance();
+DisplayHelper *m_dispHlpr = DisplayHelper::getInstance();
+MainApp *m_mainAppHlpr = MainApp::getInstance();
 
 int main() {
 

@@ -9,7 +9,7 @@
 #define configSYSTICK_CLOCK_HZ                  1000000  /* This is always 1MHz on ARM I think.... */
 #define configTICK_RATE_HZ                      1000      /* I personally like 1kHz so you can do 1 ms sleeps */
 #define configMAX_PRIORITIES                    5
-#define configMINIMAL_STACK_SIZE                128      /* you might want to increase this, especially if you do any floating point printf  *YIKES* */
+#define configMINIMAL_STACK_SIZE                256      /* you might want to increase this, especially if you do any floating point printf  *YIKES* */
 #define configMAX_TASK_NAME_LEN                 16
 #define configUSE_16_BIT_TICKS                  0
 #define configIDLE_SHOULD_YIELD                 1

@@ -12,6 +12,7 @@
 
 #include "usbHelper.h"
 
+USBHelper *USBHelper::instance = nullptr;
 uint32_t USBHelper::blink_interval_ms = BLINK_NOT_MOUNTED;
 
 USBHelper::USBHelper()

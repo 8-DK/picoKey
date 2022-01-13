@@ -80,7 +80,14 @@ class DisplayHelper{
 
     static uint8_t raspberry26x32[];
 
-public:
+    static DisplayHelper *instance;
+public: 
+    static auto *getInstance() {
+        if (!instance)
+            instance = new DisplayHelper;
+        return instance;
+    }
+
     DisplayHelper();
 
     static void fill(uint8_t buf[], uint8_t fill);
