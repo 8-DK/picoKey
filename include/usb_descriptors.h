@@ -34,4 +34,10 @@ enum
   REPORT_ID_COUNT
 };
 
+enum
+{
+  VENDOR_REQUEST_WEBUSB = 1,
+  VENDOR_REQUEST_MICROSOFT = 2
+};
+
 #endif /* USB_DESCRIPTORS_H_ */
