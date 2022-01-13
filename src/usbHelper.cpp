@@ -111,9 +111,20 @@ void USBHelper::send_hid_report(uint8_t report_id, uint32_t btn)
     default: break;
   }
 }
+void USBHelper::usbMainTask( void * pvParameters )
+{
+    /* The parameter value is expected to be 1 as 1 is passed in the
+    pvParameters value in the call to xTaskCreate() below. 
+    configASSERT( ( ( uint32_t ) pvParameters ) == 1 );
+    */
+    for( ;; )
+    {
+      USBHelper::usbLoop();
+    }
+}
 // Every 10ms, we will sent 1 report for each HID profile (keyboard, mouse etc ..)
 // tud_hid_report_complete_cb() is used to send the next report after previous one is complete
-void USBHelper::usbMainTask( void * pvParameters )
+void USBHelper::usbLoop()
 {
   tusb_init();
   while(1)

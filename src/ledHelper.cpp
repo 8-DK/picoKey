@@ -38,8 +38,8 @@ void LedHelper::ledTask( void * pvParameters )
     while(1)
     {
            m_leds[0]->set_high();
-           vTaskDelay(1000 / portTICK_PERIOD_MS);
+           vTaskDelay(50 / portTICK_PERIOD_MS);
            m_leds[0]->set_low();
-           vTaskDelay(1000 / portTICK_PERIOD_MS);
+           vTaskDelay(50 / portTICK_PERIOD_MS);
     }
 }
