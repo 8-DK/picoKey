@@ -12,9 +12,9 @@
 
 #ifndef __USBHELPER__
 #define __USBHELPER__
-#include <iostream>
-#include "bsp/board.h"
-#include "tusb.h"
+
+#include "common.h"
+
 using namespace std;
 
 #include "usb_descriptors.h"
@@ -33,11 +33,19 @@ enum  {
 class USBHelper
 {
 
-public:
+    static USBHelper *instance;
+public: 
+    static auto *getInstance() {
+        if (!instance)
+            instance = new USBHelper;
+        return instance;
+    }
     static uint32_t blink_interval_ms;
+    
     USBHelper();
     static void send_hid_report(uint8_t report_id, uint32_t btn);
-    static void usbMainTask(void);
+    static void usbMainTask( void * pvParameters );
+    static void usbLoop();
 };
 
 
