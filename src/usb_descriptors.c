@@ -130,6 +130,9 @@ uint8_t const desc_hid_report[] =
   #define EPNUM_CDC_1_IN      0x84
 #endif
 #define EPNUM_HID           0x85
+#define EPNUM_VENDOR_IN     0x86
+#define EPNUM_VENDOR_OUT    0x08
+
 
 
 // Invoked when received GET HID REPORT DESCRIPTOR
@@ -143,7 +146,7 @@ uint8_t const * tud_hid_descriptor_report_cb(uint8_t instance)
 
 
 
-#define CONFIG_TOTAL_LEN    (TUD_CONFIG_DESC_LEN + TUD_HID_DESC_LEN + (CFG_TUD_CDC * TUD_CDC_DESC_LEN) )//+ TUD_VENDOR_DESC_LEN)
+#define CONFIG_TOTAL_LEN    (TUD_CONFIG_DESC_LEN + TUD_HID_DESC_LEN + (CFG_TUD_CDC * TUD_CDC_DESC_LEN))// + TUD_VENDOR_DESC_LEN)
 
 
 
@@ -160,10 +163,10 @@ uint8_t const desc_configuration[] =
   TUD_CDC_DESCRIPTOR(ITF_NUM_CDC_0, 4, EPNUM_CDC_0_NOTIF, 8, EPNUM_CDC_0_OUT, EPNUM_CDC_0_IN, 64),
 
   // 2nd CDC: Interface number, string index, EP notification address and size, EP data address (out, in) and size.
-  TUD_CDC_DESCRIPTOR(ITF_NUM_CDC_1, 4, EPNUM_CDC_1_NOTIF, 8, EPNUM_CDC_1_OUT, EPNUM_CDC_1_IN, 64),
+  TUD_CDC_DESCRIPTOR(ITF_NUM_CDC_1, 4, EPNUM_CDC_1_NOTIF, 8, EPNUM_CDC_1_OUT, EPNUM_CDC_1_IN, 64)
 
   // Interface number, string index, EP Out & IN address, EP size
-  // TUD_VENDOR_DESCRIPTOR(ITF_NUM_VENDOR, 5, EPNUM_VENDOR_OUT, 0x80 | EPNUM_VENDOR_IN, TUD_OPT_HIGH_SPEED ? 512 : 64)
+  // TUD_VENDOR_DESCRIPTOR(ITF_NUM_VENDOR, 5, EPNUM_VENDOR_OUT, EPNUM_VENDOR_IN,  64)
 };
 
 
@@ -308,7 +311,7 @@ char const* string_desc_arr [] =
   "TinyUSB",                     // 1: Manufacturer
   "TinyUSB Device",              // 2: Product
   "123456",                      // 3: Serials, should use chip ID
-  "TinyUSB CDC",                 // 4: CDC Interface
+  "TinyUSB CDC",                 // 4: CDC Interface  
 };
 
 static uint16_t _desc_str[32];

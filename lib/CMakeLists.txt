@@ -1,1 +1,2 @@
 add_subdirectory(EEPROM)
+add_subdirectory(oledLib)

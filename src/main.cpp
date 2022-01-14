@@ -15,7 +15,7 @@ MainApp *m_mainAppHlpr = MainApp::getInstance();
 int main() {
 
   board_init();
-  
+  // DisplayHelper::displayTask((void*)0);
 BaseType_t xReturned;
 TaskHandle_t xLedTaskHandle = NULL;
 TaskHandle_t xUsbTaskHandle = NULL;
@@ -31,6 +31,14 @@ TaskHandle_t xDispTaskHandle = NULL;
                     &xLedTaskHandle );   
     
     xReturned = xTaskCreate(
+            DisplayHelper::displayTask,       /* Function that implements the task. */
+            "disp task",   /* Text name for the task. */
+            8196,             /* Stack size in words, not bytes. */
+            ( void * ) 1,    /* Parameter passed into the task. */
+            1,/* Priority at which the task is created. */
+            &xDispTaskHandle );   
+            
+    xReturned = xTaskCreate(
                 USBHelper::usbMainTask,       /* Function that implements the task. */
                 "USBtask",   /* Text name for the task. */
                 8196,             /* Stack size in words, not bytes. */
@@ -45,14 +53,6 @@ TaskHandle_t xDispTaskHandle = NULL;
                 ( void * ) 1,    /* Parameter passed into the task. */
                 tskIDLE_PRIORITY,/* Priority at which the task is created. */
                 &xKeyTaskHandle );   
-
-    xReturned = xTaskCreate(
-                DisplayHelper::displayTask,       /* Function that implements the task. */
-                "disp task",   /* Text name for the task. */
-                4096,             /* Stack size in words, not bytes. */
-                ( void * ) 1,    /* Parameter passed into the task. */
-                tskIDLE_PRIORITY,/* Priority at which the task is created. */
-                &xDispTaskHandle );   
     
     xReturned = xTaskCreate(
             MainApp::mainApp,       /* Function that implements the task. */

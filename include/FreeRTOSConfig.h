@@ -9,7 +9,7 @@
 #define configSYSTICK_CLOCK_HZ                  1000000  /* This is always 1MHz on ARM I think.... */
 #define configTICK_RATE_HZ                      1000      /* I personally like 1kHz so you can do 1 ms sleeps */
 #define configMAX_PRIORITIES                    5
-#define configMINIMAL_STACK_SIZE                256      /* you might want to increase this, especially if you do any floating point printf  *YIKES* */
+#define configMINIMAL_STACK_SIZE                512      /* you might want to increase this, especially if you do any floating point printf  *YIKES* */
 #define configMAX_TASK_NAME_LEN                 16
 #define configUSE_16_BIT_TICKS                  0
 #define configIDLE_SHOULD_YIELD                 1
@@ -31,7 +31,7 @@
 /* Memory allocation related definitions. */
 #define configSUPPORT_STATIC_ALLOCATION         1
 #define configSUPPORT_DYNAMIC_ALLOCATION        1
-#define configTOTAL_HEAP_SIZE                   50000
+#define configTOTAL_HEAP_SIZE                   90000
 #define configAPPLICATION_ALLOCATED_HEAP        0
 
 /* Hook function related definitions. */
@@ -65,7 +65,7 @@
 //#define configASSERT( ( x ) ) assert()
 
 /* FreeRTOS MPU specific definitions. */
-#define configINCLUDE_APPLICATION_DEFINED_PRIVILEGED_FUNCTIONS 0
+#define configINCLUDE_APPLICATION_DEFINED_PRIVILEGED_FUNCTIONS 1
 #define configTOTAL_MPU_REGIONS                                8 /* Default value. */
 #define configTEX_S_C_B_FLASH                                  0x07UL /* Default value. */
 #define configTEX_S_C_B_SRAM                                   0x07UL /* Default value. */
