@@ -43,7 +43,7 @@ target_include_directories(FreeRTOS PUBLIC FreeRTOS-Kernel/include include/ Free
 
 # create map/bin/hex/uf2 file in addition to ELF.
 pico_add_extra_outputs(picoKey)
-target_link_libraries(picoKey PUBLIC pico_stdlib tinyusb_device tinyusb_board FreeRTOS pico-cpp hardware_i2c libeeprom)
+target_link_libraries(picoKey PUBLIC pico_stdlib tinyusb_device tinyusb_board FreeRTOS pico-cpp hardware_i2c libeeprom liboled)
 add_custom_command(TARGET picoKey
         POST_BUILD
         COMMAND arm-none-eabi-size picoKey.elf
