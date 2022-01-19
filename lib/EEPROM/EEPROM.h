@@ -10,20 +10,6 @@
 // Support nested IRQ disable/re-enable
 static std::stack<uint32_t> _irqStack[2];
 
-extern "C" void interrupts() {
-    if (_irqStack[get_core_num()].empty()) {
-        // ERROR
-        return;
-    }
-    auto oldIrqs = _irqStack[get_core_num()].top();
-    _irqStack[get_core_num()].pop();
-    restore_interrupts(oldIrqs);
-}
-
-extern "C" void noInterrupts() {
-    _irqStack[get_core_num()].push(save_and_disable_interrupts());
-}
-
 class EEPROMClass {
 public:
     EEPROMClass(void);

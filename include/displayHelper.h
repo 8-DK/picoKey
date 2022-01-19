@@ -13,6 +13,8 @@
 #ifndef __DISPLAYHLPR__
 #define __DISPLAYHLPR__
 #include "common.h"
+#include "ss_oled.hpp"
+
 
 /* Example code to talk to an SSD1306-based OLED display
 
@@ -46,6 +48,9 @@ class DisplayHelper{
     static uint8_t raspberry26x32[];
 
     static DisplayHelper *instance;
+    static picoSSOLED myOled;    
+    static uint8_t ucBuffer[1024];
+    static vector<string> dispList;
 public: 
     static auto *getInstance() {
         if (!instance)
@@ -55,7 +60,9 @@ public:
 
     DisplayHelper();
     static void displayTask( void * pvParameters );
-    static void displayLoop();
+    static void displayLoop();    
+    static void scrnWithLockMsg(string message);
+    static void showlist(string message);
 };
 
 #endif

@@ -2,10 +2,15 @@
 #define __COMMON__
 
 //standar includes
-#include <array>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+
+//cpp includes
+#include <array>
+#include <string>
+#include <vector>
+using namespace std;
 
 //USB includes
 #include <iostream>

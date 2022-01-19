@@ -13,10 +13,18 @@
 #ifndef __MAINAPP__
 #define __MAINAPP__
 #include "common.h"
+#define EAddress 0
+#define UnlocSeqAddr EAddress
+#define ListCountAddr UnlocSeqAddr+1
+#define ListDataAddr  ListCountAddr+1
 
 class MainApp
 {
     static MainApp *instance;
+    static uint8_t mUnlockSeq;
+    static uint8_t mListCount;
+    static vector<string> userNameList;
+    static vector<string> passwordList;
 public: 
     static auto *getInstance() {
         if (!instance)
@@ -25,6 +33,8 @@ public:
     }
     MainApp();
     ~MainApp();
+    static void storeListInEeprom();
+    static void readListFromEeprom();
     static void mainApp( void * pvParameters );
 };
 

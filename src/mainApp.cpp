@@ -14,13 +14,43 @@
 #include "EEPROM.h"
 
 MainApp *MainApp::instance = nullptr;
+uint8_t MainApp::mUnlockSeq = 0;
+uint8_t MainApp::mListCount = 0;
+vector<string> MainApp::userNameList;
+vector<string> MainApp::passwordList;
 
 MainApp::MainApp()
 {
+    EEPROM.begin(4096);
+    mUnlockSeq = EEPROM.read(EAddress);
+    mListCount = EEPROM.read(ListCountAddr);
+    if( (mUnlockSeq == 0xFF) || (mListCount == 0xFF))
+    {
+        mUnlockSeq =  0;
+        mListCount = 0;
+    }
 }
 
 MainApp::~MainApp()
 {
+
+}
+
+void MainApp::storeListInEeprom()
+{
+
+}
+
+void MainApp::readListFromEeprom()
+{
+    for(int i = 0 ; i < mListCount;i++)
+    {
+        char listData[100] = {0};
+        EEPROM.get(ListDataAddr+i,listData);
+        char* ptr = strtok(listData, " , ");
+        userNameList.push_back(string(ptr));
+        userNameList.push_back(string(strtok (NULL, " , ")));
+    }
 }
 
 
