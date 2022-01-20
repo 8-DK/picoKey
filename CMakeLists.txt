@@ -18,6 +18,7 @@ add_executable(picoKey
     src/usbHelper.cpp 
     src/keyHelper.cpp 
     src/displayHelper.cpp 
+    src/utils.cpp
 )
 
 target_sources(picoKey PUBLIC ${CMAKE_CURRENT_LIST_DIR}/src/usb_descriptors.c)

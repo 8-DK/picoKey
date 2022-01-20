@@ -30,4 +30,7 @@ using namespace std;
 #include "pico/binary_info.h"
 #include "hardware/i2c.h"
 
+//Utils
+#include "utils.h"
+
 #endif

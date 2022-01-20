@@ -50,19 +50,41 @@ void DisplayHelper::scrnWithLockMsg(string message)
 
 void DisplayHelper::showlist(string message)
 {
-    dispList.push_back("facebook");
-    dispList.push_back("Gmail");
-    dispList.push_back("Twiter1");
-    dispList.push_back("Twit2");
-    dispList.push_back("Twir3");
-    dispList.push_back("Twite4");
-    dispList.push_back("Twi5");
-    dispList.push_back("Twit6");
-    dispList.push_back("facebook");
-    dispList.push_back("Gmail");
-    dispList.push_back("Twiter1");
-    dispList.push_back("Twit2");
+    dispList.push_back("1facebook");
+    dispList.push_back("2Gmail");
+    dispList.push_back("3Twiter1");
+    dispList.push_back("4Twit2");
+    dispList.push_back("5Twir3");
+    dispList.push_back("6Twite4");
+    dispList.push_back("7Twi5");
+    dispList.push_back("8Twit6");
+    dispList.push_back("9facebook");
+    dispList.push_back("10Gmail");
+    dispList.push_back("11Twiter1");
+    dispList.push_back("12Twit2");
+
+    int listDispCount  = 4;
+    int scrollerPosn = 0;  
+    int minScrollerH = 4;
+    int totalCount = (int)dispList.size();  
+    
+    int scrollerH = 0;
+    int scrollerPosition = 0;
+    int curretScrollerIndex = 0;
+
+    if((totalCount!=0) && (listDispCount!=0))
+    {
+        scrollerH = (int) (totalCount/listDispCount); //eg total = 20 , disp cnt = 4,  scroller height = 20/4 = 5px
+        scrollerH = (int)63/scrollerH;
+        if(scrollerH < 4 )
+            scrollerH = 4;
+        else if(scrollerH > 63)
+            scrollerH = 63;
+    }
+
+
     myOled.fill(0, 1);
+
     int mstart = 0;
     int m = 1;
     while(1)
@@ -71,11 +93,30 @@ void DisplayHelper::showlist(string message)
         {
             // for (int i = mstart ; i < (mstart+3) ; i++)
             {
+               curretScrollerIndex =  mstart;
+                if((curretScrollerIndex!=0) && (totalCount!=0))
+                    scrollerPosition =(int)((curretScrollerIndex*100)/totalCount);
+
+                scrollerPosition = Utils.mapInt(scrollerPosition,0,100,0,63);
+
+                //trim scroller goin out display
+                if((scrollerPosition+scrollerH) > 63)
+                {
+                    scrollerH = 63-scrollerPosition;
+                }
+
                 myOled.fill(0, 0);
+                char buff[100];
+                sprintf(buff,"sp%d",scrollerPosition);
+                // myOled.write_string(0, 0, 0, buff, FONT_12x16, 0, 0);
                 myOled.write_string(0, 0, 0, (char *)dispList.at(mstart).c_str(), FONT_12x16, 0, 0);
                 myOled.write_string(0, 0, 2, (char *)dispList.at(mstart+1).c_str(), FONT_12x16, 0, 0);
                 myOled.write_string(0, 0, 4, (char *)dispList.at(mstart+2).c_str(),  FONT_12x16, 0, 0);
                 myOled.write_string(0, 0, 6, (char *)dispList.at(mstart+3).c_str(),  FONT_12x16, 0, 0);
+                
+                myOled.draw_rectangle(118,scrollerPosition,127,scrollerPosition+scrollerH,1,0);
+                myOled.draw_rectangle(121,0,121,63,1,0);
+                
                 myOled.dump_buffer(ucBuffer);
             }
         }
