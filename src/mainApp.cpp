@@ -11,24 +11,79 @@
  */
 
 #include "mainApp.h"
-#include "EEPROM.h"
+#include "displayHelper.h"
+#include "hardware/flash.h"
 
 MainApp *MainApp::instance = nullptr;
+uint8_t MainApp::mUnlockSeq = 0;
+uint8_t MainApp::mListCount = 0;
+vector<string> MainApp::userNameList;
+vector<string> MainApp::passwordList;
+
+// uint32_t MainApp::startAddress = (uint32_t) (XIP_BASE+ 0x103ff000);
+#define FLASH_TARGET_OFFSET (1792 * 1024)
+uint8_t * MainApp::startAddress = (uint8_t *) (XIP_BASE + FLASH_TARGET_OFFSET);
 
 MainApp::MainApp()
 {
+    if( (mUnlockSeq == 0xFF) || (mListCount == 0xFF))
+    {
+        mUnlockSeq =  0;
+        mListCount = 0;
+    }
+    // storeListInEeprom();
+    // readListFromEeprom();
 }
 
 MainApp::~MainApp()
 {
+
+}
+
+void MainApp::storeListInEeprom()
+{
+    mListCount = 20;
+    uint8_t buffer[FLASH_SECTOR_SIZE] = {0};
+    int j = 0;
+    buffer[j++] = mListCount;
+    buffer[j++] = mUnlockSeq;
+    for(int i = 0 ; i < mListCount ; i++)
+    {
+        char listData[100] = {0};    
+        sprintf(listData,"E%d,Password%d",i);
+        for(int m = 0 ; m < 100 ; m ++)
+            buffer[j++] = listData[m];
+    }
+    flash_range_erase(FLASH_TARGET_OFFSET, FLASH_SECTOR_SIZE);
+    flash_range_program(FLASH_TARGET_OFFSET, buffer, FLASH_SECTOR_SIZE);
+}
+
+void MainApp::readListFromEeprom()
+{
+    mListCount = 0;
+    mUnlockSeq = 0;
+    uint8_t* ptr;
+    int j = 0;
+
+    mListCount = startAddress[j++];
+    mUnlockSeq = startAddress[j++];
+    vector<string> m_dispList;
+    for(int i = 0 ; i < mListCount ; i++)
+    {
+        char listData[100] = {0};    
+        memcpy(listData,startAddress+j+(i*100),100);
+        m_dispList.push_back(listData);
+    }
+    DisplayHelper::getInstance()->updateList(m_dispList);
 }
 
 
 void MainApp::mainApp( void * pvParameters )
 {
     while (1)
-    {
-       vTaskDelay(1000 / portTICK_PERIOD_MS);
+    {       
+       vTaskDelay(5000 / portTICK_PERIOD_MS);
+       readListFromEeprom();
     }
     
 }

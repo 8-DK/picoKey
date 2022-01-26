@@ -11,7 +11,22 @@
 #include <Adafruit_TinyUSB.h>
 #endif
 
-extern "C" uint8_t _EEPROM_start;
+// extern "C" uint8_t _EEPROM_start;
+uint8_t _EEPROM_start;
+
+extern "C" void interrupts() {
+    if (_irqStack[get_core_num()].empty()) {
+        // ERROR
+        return;
+    }
+    auto oldIrqs = _irqStack[get_core_num()].top();
+    _irqStack[get_core_num()].pop();
+    restore_interrupts(oldIrqs);
+}
+
+extern "C" void noInterrupts() {
+    _irqStack[get_core_num()].push(save_and_disable_interrupts());
+}
 
 EEPROMClass::EEPROMClass(void)
     : _sector(&_EEPROM_start) {
