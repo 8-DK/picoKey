@@ -23,6 +23,7 @@ class MainApp
     static MainApp *instance;
     static uint8_t mUnlockSeq;
     static uint8_t mListCount;
+    static uint8_t * startAddress;
     static vector<string> userNameList;
     static vector<string> passwordList;
 public: 

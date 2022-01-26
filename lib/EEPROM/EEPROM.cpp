@@ -11,7 +11,8 @@
 #include <Adafruit_TinyUSB.h>
 #endif
 
-extern "C" uint8_t _EEPROM_start;
+// extern "C" uint8_t _EEPROM_start;
+uint8_t _EEPROM_start;
 
 extern "C" void interrupts() {
     if (_irqStack[get_core_num()].empty()) {

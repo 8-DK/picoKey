@@ -33,4 +33,22 @@ using namespace std;
 //Utils
 #include "utils.h"
 
+//flash
+#include "pico/stdlib.h"
+#include "hardware/flash.h"
+
+
+//Display enums
+typedef enum DISP_STATS{
+    EM_INIT,
+    EM_SHOW_WLCM,
+    EM_SHOW_LOCKSCR,
+    EM_SHOW_FAILED,
+    EM_SHOW_SUCCESS,
+    EM_SHO_TYPE_USER,
+    EM_SHOW_TYPE_PASS,
+    EM_SHOW_LIST,    
+}DISP_STATS;
+
+
 #endif

@@ -15,25 +15,6 @@
 #include "common.h"
 #include "ss_oled.hpp"
 
-
-/* Example code to talk to an SSD1306-based OLED display
-
-   NOTE: Ensure the device is capable of being driven at 3.3v NOT 5v. The Pico
-   GPIO (and therefore I2C) cannot be used at 5v.
-
-   You will need to use a level shifter on the I2C lines if you want to run the
-   board at 5v.
-
-   Connections on Raspberry Pi Pico board, other boards may vary.
-
-   GPIO PICO_DEFAULT_I2C_SDA_PIN (on Pico this is GP4 (pin 6)) -> SDA on display
-   board
-   GPIO PICO_DEFAULT_I2C_SCK_PIN (on Pico this is GP5 (pin 7)) -> SCL on
-   display board
-   3.3v (pin 36) -> VCC on display board
-   GND (pin 38)  -> GND on display board
-*/
-// RPI Pico
 #define SDA_PIN 4
 #define SCL_PIN 5
 #define PICO_I2C i2c0
@@ -51,6 +32,9 @@ class DisplayHelper{
     static picoSSOLED myOled;    
     static uint8_t ucBuffer[1024];
     static vector<string> dispList;
+    static int curretScrollerIndex;
+    static int totalListCount;
+    static DISP_STATS dispState;
 public: 
     static auto *getInstance() {
         if (!instance)
@@ -63,6 +47,21 @@ public:
     static void displayLoop();    
     static void scrnWithLockMsg(string message);
     static void showlist(string message);
+    static void showlist1(vector<string> m_dispList);
+    static void updateList(vector<string> m_dispList);
+
+    //disp controls
+    static void listSelUp(){
+        curretScrollerIndex--;
+        if(curretScrollerIndex < 0)
+            curretScrollerIndex = totalListCount;
+    }
+
+    static void listSelDown(){
+        curretScrollerIndex++;
+        if(curretScrollerIndex >= totalListCount)
+            curretScrollerIndex = 0;
+    }
 };
 
 #endif

@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include "FreeRTOS.h"
 #include "task.h"
+#include "math.h"
 
 #ifdef true
 #undef true
