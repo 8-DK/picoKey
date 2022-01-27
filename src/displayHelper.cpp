@@ -12,7 +12,7 @@
 
 #include "displayHelper.h"
 #include "pico/stdlib.h"
-
+#include "images.h"
 
 DisplayHelper *DisplayHelper::instance = nullptr;
 vector<string> DisplayHelper::dispList;
@@ -318,22 +318,32 @@ void DisplayHelper::displayLoop()
                 break;
 
                 case EM_SHOW_WLCM:
+                myOled.load_bmp((uint8_t*)&screen1,true,0);
+                myOled.dump_buffer(ucBuffer);
                 dispState = EM_SHOW_LOCKSCR;
                 break;
 
                 case EM_SHOW_LOCKSCR:
+                myOled.load_bmp((uint8_t*)&screen2,true,0);
+                myOled.dump_buffer(ucBuffer);                
                 dispState = EM_SHOW_FAILED;
                 break;
 
                 case EM_SHOW_FAILED:
+                myOled.load_bmp((uint8_t*)&screen3,true,0);
+                myOled.dump_buffer(ucBuffer);                
                 dispState = EM_SHOW_SUCCESS;
                 break;
 
                 case EM_SHOW_SUCCESS:
+                myOled.load_bmp((uint8_t*)&screen4,true,0);
+                myOled.dump_buffer(ucBuffer);
                 dispState = EM_SHO_TYPE_USER;
                 break;
 
                 case EM_SHO_TYPE_USER:
+                myOled.load_bmp((uint8_t*)&screen5,true,0);
+                myOled.dump_buffer(ucBuffer);
                 dispState = EM_SHOW_TYPE_PASS;
                 break;
 
@@ -342,10 +352,11 @@ void DisplayHelper::displayLoop()
                 break;
 
                 case EM_SHOW_LIST:
-                DisplayHelper::getInstance()->showlist1(dispList);
+                // DisplayHelper::getInstance()->showlist1(dispList);
                 dispState = EM_SHOW_WLCM;
                 break;
             }
+            vTaskDelay(2000 / portTICK_PERIOD_MS);
         }
     }
 }

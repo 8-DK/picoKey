@@ -26,6 +26,7 @@
 
 class DisplayHelper{
 
+    // static const unsigned char screen1;
     static uint8_t raspberry26x32[];
 
     static DisplayHelper *instance;
