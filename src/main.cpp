@@ -6,6 +6,8 @@
 #include "displayHelper.h"
   
 
+EventGroupHandle_t  xEventGroup;
+
 LedHelper *m_ledHlpr = LedHelper::getInstance();
 KeyHelper *m_keyHlpr = KeyHelper::getInstance();
 USBHelper *m_usbHlpr = USBHelper::getInstance();
@@ -13,9 +15,11 @@ DisplayHelper *m_dispHlpr = DisplayHelper::getInstance();
 MainApp *m_mainAppHlpr = MainApp::getInstance();
 
 int main() {
-
+  stdio_init_all();
   board_init();
-  // DisplayHelper::displayTask((void*)0);
+  
+xEventGroup  =  xEventGroupCreate();
+
 BaseType_t xReturned;
 TaskHandle_t xLedTaskHandle = NULL;
 TaskHandle_t xUsbTaskHandle = NULL;

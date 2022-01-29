@@ -45,6 +45,7 @@ public:
 
     DisplayHelper();
     static void displayTask( void * pvParameters );
+    static void displaySetState(DISP_STATS mDispState);
     static void displayLoop();    
     static void scrnWithLockMsg(string message);
     static void showlist(string message);

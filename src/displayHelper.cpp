@@ -21,7 +21,7 @@ picoSSOLED DisplayHelper::myOled(OLED_128x64, 0x3c, 0, 0, PICO_I2C, SDA_PIN, SCL
 uint8_t DisplayHelper::raspberry26x32[] = {0x0, 0x0, 0xe, 0x7e, 0xfe, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfe, 0xfe, 0xfc, 0xf8, 0xfc, 0xfe, 0xfe, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfe, 0x7e, 0x1e, 0x0, 0x0, 0x0, 0x80, 0xe0, 0xf8, 0xfd, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfd, 0xf8, 0xe0, 0x80, 0x0, 0x0, 0x1e, 0x7f, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f, 0x1e, 0x0, 0x0, 0x0, 0x3, 0x7, 0xf, 0x1f, 0x1f, 0x3f, 0x3f, 0x7f, 0xff, 0xff, 0xff, 0xff, 0x7f, 0x7f, 0x3f, 0x3f, 0x1f, 0x1f, 0xf, 0x7, 0x3, 0x0, 0x0};
 int DisplayHelper::curretScrollerIndex = 0;
 int DisplayHelper::totalListCount = 0;
-DISP_STATS DisplayHelper::dispState =  EM_INIT;
+DISP_STATS DisplayHelper::dispState =  EM_DISP_IDEAL;
 
 DisplayHelper::DisplayHelper()
 {
@@ -179,7 +179,9 @@ void DisplayHelper::showlist1(vector<string> m_dispList)
     int pageStart = 0;
     // while(1)
     {
-        totalListCount = (int)dispList.size();  
+        totalListCount = (int)dispList.size(); 
+        if(totalListCount <= 0) 
+            return;
         myOled.fill(0, 0);
         float divn = (float)curretScrollerIndex/(float)listDispCount; 
         pageStart = (int)divn*listDispCount;   
@@ -230,6 +232,11 @@ void DisplayHelper::showlist1(vector<string> m_dispList)
 
         // vTaskDelay(2000 / portTICK_PERIOD_MS);
     }        
+}
+
+void DisplayHelper::displaySetState(DISP_STATS mDispState)
+{
+    dispState = mDispState;
 }
 
 void DisplayHelper::displayLoop()
@@ -292,71 +299,65 @@ void DisplayHelper::displayLoop()
         // myOled.dump_buffer(ucBuffer);
         // myOled.write_string(0, 0, 1, (char *)"With backbuffer", FONT_SMALL, 0, 1);
          myOled.fill(0, 1);
-        // scrnWithLockMsg("dfs");  
-
-        dispList.push_back("1facebook");
-        dispList.push_back("2Gmail");
-        dispList.push_back("3Twiter1");
-        dispList.push_back("4Twit2");
-        dispList.push_back("5Twir3");
-        dispList.push_back("6Twite4");
-        dispList.push_back("7Twi5");
-        dispList.push_back("8Twit6");
-        dispList.push_back("9facebook");
-        dispList.push_back("10Gmail");
-        dispList.push_back("11Twiter1");
-        dispList.push_back("12Twit2");
-        dispList.push_back("13Twit2");
-        dispList.push_back("14Twit2");  
         
         while (1)
         {       
             switch(dispState)
             {
-                case EM_INIT:
-                dispState = EM_SHOW_WLCM;
+                case EM_DISP_INIT:
+                dispState = EM_DISP_IDEAL;
+                break;
+                
+                case EM_DISP_IDEAL:
                 break;
 
-                case EM_SHOW_WLCM:
+                case EM_DISP_WLCM:
+                myOled.load_bmp((uint8_t*)&dkLog,true,0);
+                myOled.dump_buffer(ucBuffer);
+                dispState = EM_DISP_IDEAL;
+                break;
+
+                case EM_DISP_LOCKSCR:
                 myOled.load_bmp((uint8_t*)&screen1,true,0);
                 myOled.dump_buffer(ucBuffer);
-                dispState = EM_SHOW_LOCKSCR;
+                dispState = EM_DISP_IDEAL;
                 break;
 
-                case EM_SHOW_LOCKSCR:
+                case EM_DISP_UNLOCKSCR:
                 myOled.load_bmp((uint8_t*)&screen2,true,0);
                 myOled.dump_buffer(ucBuffer);                
-                dispState = EM_SHOW_FAILED;
+                dispState = EM_DISP_IDEAL;
                 break;
 
-                case EM_SHOW_FAILED:
+                case EM_DISP_FAILED:
                 myOled.load_bmp((uint8_t*)&screen3,true,0);
                 myOled.dump_buffer(ucBuffer);                
-                dispState = EM_SHOW_SUCCESS;
+                dispState = EM_DISP_IDEAL;
                 break;
 
-                case EM_SHOW_SUCCESS:
+                case EM_DISP_SUCCESS:
                 myOled.load_bmp((uint8_t*)&screen4,true,0);
                 myOled.dump_buffer(ucBuffer);
-                dispState = EM_SHO_TYPE_USER;
+                dispState = EM_DISP_IDEAL;
                 break;
 
-                case EM_SHO_TYPE_USER:
+                case EM_DISP_TYPE_USER:
                 myOled.load_bmp((uint8_t*)&screen5,true,0);
                 myOled.dump_buffer(ucBuffer);
-                dispState = EM_SHOW_TYPE_PASS;
+                dispState = EM_DISP_IDEAL;
                 break;
 
-                case EM_SHOW_TYPE_PASS:
-                dispState = EM_SHOW_LIST;
+                case EM_DISP_TYPE_PASS:
+                dispState = EM_DISP_IDEAL;
                 break;
 
-                case EM_SHOW_LIST:
-                // DisplayHelper::getInstance()->showlist1(dispList);
-                dispState = EM_SHOW_WLCM;
+                case EM_DISP_LIST:
+                showlist1(dispList);
+                delay(2000);
+                dispState = EM_DISP_IDEAL;
                 break;
             }
-            vTaskDelay(2000 / portTICK_PERIOD_MS);
+            delay(10);
         }
     }
 }

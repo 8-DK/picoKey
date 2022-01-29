@@ -15,6 +15,9 @@
 
 #include "common.h"
 
+#define PRESSED 1
+#define RELEASED 0
+
 #define KEY_PORT 0
 #define KEY_1_PIN 16
 #define KEY_2_PIN 17
@@ -24,6 +27,17 @@
 #define KEY_6_PIN 21
 
 #define TOTAL_KEY_COUNT 6
+
+typedef enum KEY_ID{
+    P1=0,
+    P2,
+    P3,
+    P4,
+    P5,
+    P6,
+    KEY_MAX,    
+    KEY_INVALID
+}KEY_ID;
 
 class KeyHelper{
     
@@ -35,11 +49,13 @@ public:
         return instance;
     }
 
+    static KEY_ID lastKeyPressed ;
+
     static int pinNums[TOTAL_KEY_COUNT];
-    static pico_cpp::GPIO_Pin *m_keys[TOTAL_KEY_COUNT];
+    static int keyPressed[TOTAL_KEY_COUNT];    
 
     KeyHelper();
-    bool readKeyPress(int keyNum);
+    bool readKeyPress(int keyId);
     static void initKey();
     static void keyTask( void * pvParameters );
     

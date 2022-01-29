@@ -14,6 +14,8 @@
 #define __USBHELPER__
 
 #include "common.h"
+#include <stdio.h>
+#include <stdarg.h>
 
 using namespace std;
 
@@ -30,6 +32,8 @@ enum  {
   BLINK_SUSPENDED = 2500,
 };
 
+void mPrintf( const char * format, ... );
+
 class USBHelper
 {
 
@@ -45,6 +49,7 @@ public:
     USBHelper();
     static void send_hid_report(uint8_t report_id, uint32_t btn);
     static void usbMainTask( void * pvParameters );
+    static void sendToVcom(uint8_t itf, uint8_t buf[], uint32_t count);
     static void usbLoop();
 };
 
