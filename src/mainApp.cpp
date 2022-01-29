@@ -13,10 +13,12 @@
 #include "mainApp.h"
 #include "displayHelper.h"
 #include "hardware/flash.h"
+#include "usbHelper.h"
 
 MainApp *MainApp::instance = nullptr;
 uint8_t MainApp::mUnlockSeq = 0;
 uint8_t MainApp::mListCount = 0;
+MAINAPP_STATS MainApp::mainAppState = EM_MAINAPP_INIT;
 vector<string> MainApp::userNameList;
 vector<string> MainApp::passwordList;
 
@@ -81,9 +83,62 @@ void MainApp::readListFromEeprom()
 void MainApp::mainApp( void * pvParameters )
 {
     while (1)
-    {       
-       vTaskDelay(5000 / portTICK_PERIOD_MS);
-       readListFromEeprom();
+    {                     
+        const EventBits_t xBitsToWaitFor  = (KEY_TASK_KEY_PRESS_EVENT);
+        EventBits_t xEventGroupValue;
+        while(1)
+        {
+            switch(mainAppState)
+            {
+                    case EM_MAINAPP_INIT:
+                    DisplayHelper::displaySetState(EM_DISP_INIT);
+                    mainAppState = EM_MAINAPP_WLCM;
+                    break; 
+
+                    case EM_MAINAPP_IDEAL:
+                    {
+                        xEventGroupValue  = xEventGroupWaitBits(xEventGroup,
+                                    xBitsToWaitFor,
+                                    pdTRUE,
+                                    pdTRUE,
+                                    100
+                                    );
+                        if((xEventGroupValue & KEY_TASK_KEY_PRESS_EVENT) !=0)
+                        {                
+                            readListFromEeprom();
+                            mPrintf("mainAppState---Key event\r\n");
+                            DisplayHelper::displaySetState(EM_DISP_LIST);
+                        }
+                    }
+                    // mainAppState = EM_MAINAPP_WLCM;
+                    break; 
+                    
+                    case EM_MAINAPP_WLCM:
+                    DisplayHelper::displaySetState(EM_DISP_WLCM);
+                    delay(2000);
+                    DisplayHelper::displaySetState(EM_DISP_LOCKSCR);
+                    mainAppState = EM_MAINAPP_IDEAL;
+                    break; 
+                    
+                    case EM_MAINAPP_FIRSTTIME:
+                    break; 
+                    
+                    case EM_MAINAPP_LOCKED:
+                    break; 
+                    
+                    case EM_MAINAPP_UNLOCKED:
+                    break; 
+                    
+                    case EM_MAINAPP_SELECT:
+                    break; 
+                    
+                    case EM_MAINAPP_SEND_USERNAEM:
+                    break; 
+                    
+                    case EM_MAINAPP_SEND_PASS:
+                    break;                     
+            }
+        }
     }
     
 }

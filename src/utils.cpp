@@ -58,3 +58,11 @@ void UtilsClass::getRandoms(uint8_t* arr,int lower, int upper,int count)
     	arr[i] = (uint8_t)((rand() % (upper - lower + 1)) + lower);
     }
 }
+
+uint32_t UtilsClass::millis() {
+	return to_ms_since_boot(get_absolute_time());
+}
+
+uint32_t UtilsClass::micros() {
+	return to_us_since_boot(get_absolute_time());
+}

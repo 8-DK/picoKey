@@ -12,6 +12,22 @@
 
 #include "usbHelper.h"
 
+
+FILE __stdout; //STDOUT
+FILE __stdin;  //STDIN
+
+
+void mPrintf( const char * format, ... )
+{
+  char buffer[256];
+  va_list args;
+  va_start (args, format);
+  vsprintf (buffer,format, args);
+  USBHelper::sendToVcom (0,(uint8_t*)buffer,strlen(buffer));
+  va_end (args);
+}
+
+
 USBHelper *USBHelper::instance = nullptr;
 uint32_t USBHelper::blink_interval_ms = BLINK_NOT_MOUNTED;
 
@@ -123,6 +139,19 @@ void USBHelper::usbMainTask( void * pvParameters )
       USBHelper::usbLoop();
     }
 }
+
+// echo to either Serial0 or Serial1
+// with Serial0 as all lower case, Serial1 as all upper case
+void USBHelper::sendToVcom(uint8_t itf, uint8_t buf[], uint32_t count)
+{
+  for(uint32_t i=0; i<count; i++)
+  {
+    tud_cdc_n_write_char(itf, buf[i]);
+  }
+  tud_cdc_n_write_flush(itf);
+}
+
+
 // Every 10ms, we will sent 1 report for each HID profile (keyboard, mouse etc ..)
 // tud_hid_report_complete_cb() is used to send the next report after previous one is complete
 void USBHelper::usbLoop()

@@ -26,6 +26,8 @@ class MainApp
     static uint8_t * startAddress;
     static vector<string> userNameList;
     static vector<string> passwordList;
+
+    static MAINAPP_STATS mainAppState;
 public: 
     static auto *getInstance() {
         if (!instance)

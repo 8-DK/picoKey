@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <pico/time.h>
 #include "FreeRTOS.h"
 #include "task.h"
 #include "math.h"
@@ -66,6 +67,8 @@ public:
 	int mapInt(int x, int in_min, int in_max, int out_min, int out_max);
 	int ascciToDecimal(char a);
 	void getRandoms(uint8_t* arr,int lower, int upper,int count);
+	uint32_t millis();
+	uint32_t micros();
 };
 
 extern UtilsClass Utils;

@@ -26,6 +26,7 @@
 
 class DisplayHelper{
 
+    // static const unsigned char screen1;
     static uint8_t raspberry26x32[];
 
     static DisplayHelper *instance;
@@ -44,6 +45,7 @@ public:
 
     DisplayHelper();
     static void displayTask( void * pvParameters );
+    static void displaySetState(DISP_STATS mDispState);
     static void displayLoop();    
     static void scrnWithLockMsg(string message);
     static void showlist(string message);
