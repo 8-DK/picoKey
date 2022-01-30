@@ -28,6 +28,11 @@ class MainApp
     static vector<string> passwordList;
 
     static MAINAPP_STATS mainAppState;
+    static TimerHandle_t xTimerKeyTimeout;
+
+    static uint32_t inUnlkSeq;
+    static int currentKeyIndex;
+
 public: 
     static auto *getInstance() {
         if (!instance)
@@ -38,6 +43,7 @@ public:
     ~MainApp();
     static void storeListInEeprom();
     static void readListFromEeprom();
+    static void vKeyTimeoutCallback( TimerHandle_t xTimer );
     static void mainApp( void * pvParameters );
 };
 

@@ -49,13 +49,15 @@ public:
         return instance;
     }
 
-    static KEY_ID lastKeyPressed ;
+    static KEY_ID lastKeyPressed;
+    static KEY_ID lastKeyFromISR;
+    static bool isKeyPressed;
 
     static int pinNums[TOTAL_KEY_COUNT];
     static int keyPressed[TOTAL_KEY_COUNT];    
 
     KeyHelper();
-    bool readKeyPress(int keyId);
+    static KEY_ID readKeyPress();
     static void initKey();
     static void keyTask( void * pvParameters );
     

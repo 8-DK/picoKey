@@ -18,6 +18,7 @@
 #endif
 #define false ((bool)0)
 
+#define toMs(ms) (ms / portTICK_PERIOD_MS)
 #define delay(ms) vTaskDelay(ms / portTICK_PERIOD_MS);
 #define getRand(lower,upper) ((rand() % (upper - lower + 1)) + lower)
 //#define constrain(amt,low,high) ((amt)<(low)?(low):((amt)>(high)?(high):(amt)))
