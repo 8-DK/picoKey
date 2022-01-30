@@ -21,6 +21,7 @@ using namespace std;
 #include "FreeRTOS.h"
 #include "task.h"
 #include "event_groups.h"
+#include "timers.h"
 
 //Boards include 
 #include "GPIO.hpp"
@@ -69,6 +70,5 @@ typedef enum MAINAPP_STATS{
 
 //task globals
 #define KEY_TASK_KEY_PRESS_EVENT   (1UL << 0UL) // zero shift for bit0
-extern EventGroupHandle_t  xEventGroup;
 
 #endif

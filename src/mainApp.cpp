@@ -14,6 +14,7 @@
 #include "displayHelper.h"
 #include "hardware/flash.h"
 #include "usbHelper.h"
+#include "keyHelper.h"
 
 MainApp *MainApp::instance = nullptr;
 uint8_t MainApp::mUnlockSeq = 0;
@@ -21,6 +22,10 @@ uint8_t MainApp::mListCount = 0;
 MAINAPP_STATS MainApp::mainAppState = EM_MAINAPP_INIT;
 vector<string> MainApp::userNameList;
 vector<string> MainApp::passwordList;
+TimerHandle_t MainApp::xTimerKeyTimeout;
+
+uint32_t MainApp::inUnlkSeq = 0;
+int MainApp::currentKeyIndex = 0;
 
 // uint32_t MainApp::startAddress = (uint32_t) (XIP_BASE+ 0x103ff000);
 #define FLASH_TARGET_OFFSET (1792 * 1024)
@@ -79,9 +84,31 @@ void MainApp::readListFromEeprom()
     DisplayHelper::getInstance()->updateList(m_dispList);
 }
 
+void MainApp::vKeyTimeoutCallback( TimerHandle_t xTimer )
+{
+    mPrintf("------------------\n");
+    for(int i=0 ; i < currentKeyIndex ; i++)
+    {       
+        if(inUnlkSeq & (1 << i))
+             mPrintf("unlock[%d] - P1\n",i);
+        else
+             mPrintf("unlock[%d] - P2\n",i);
+    }    
+    mPrintf("------------------\n");
+    inUnlkSeq = 0;
+    currentKeyIndex = 0;
+}
 
 void MainApp::mainApp( void * pvParameters )
 {
+    readListFromEeprom();
+    xTimerKeyTimeout = xTimerCreate
+                   ("KeyTimer",
+                     toMs(2000),
+                     pdFALSE,
+                     ( void * ) 0,
+                     vKeyTimeoutCallback
+                   );
     while (1)
     {                     
         const EventBits_t xBitsToWaitFor  = (KEY_TASK_KEY_PRESS_EVENT);
@@ -97,27 +124,30 @@ void MainApp::mainApp( void * pvParameters )
 
                     case EM_MAINAPP_IDEAL:
                     {
-                        xEventGroupValue  = xEventGroupWaitBits(xEventGroup,
-                                    xBitsToWaitFor,
-                                    pdTRUE,
-                                    pdTRUE,
-                                    100
-                                    );
-                        if((xEventGroupValue & KEY_TASK_KEY_PRESS_EVENT) !=0)
-                        {                
-                            readListFromEeprom();
-                            mPrintf("mainAppState---Key event\r\n");
-                            DisplayHelper::displaySetState(EM_DISP_LIST);
+                        {                                                                                                    
+                            KEY_ID mKey= KeyHelper::readKeyPress();
+                            if(mKey == P1)
+                            {
+                                mPrintf("mainAppState---Key P1\n");
+                                inUnlkSeq = inUnlkSeq | (1 << currentKeyIndex++);
+                                xTimerStart( xTimerKeyTimeout, 0 ); //restart timer
+                            }
+                            else if(mKey == P2)
+                            {
+                                mPrintf("mainAppState---Key P2\n");
+                                inUnlkSeq = inUnlkSeq | (0 << currentKeyIndex++);       
+                                xTimerStart( xTimerKeyTimeout, 0 ); //restart timer                     
+                            }                                                        
                         }
                     }
                     // mainAppState = EM_MAINAPP_WLCM;
                     break; 
                     
                     case EM_MAINAPP_WLCM:
-                    DisplayHelper::displaySetState(EM_DISP_WLCM);
-                    delay(2000);
-                    DisplayHelper::displaySetState(EM_DISP_LOCKSCR);
-                    mainAppState = EM_MAINAPP_IDEAL;
+                        DisplayHelper::displaySetState(EM_DISP_WLCM);
+                        delay(2000);
+                        DisplayHelper::displaySetState(EM_DISP_LOCKSCR);
+                        mainAppState = EM_MAINAPP_IDEAL;
                     break; 
                     
                     case EM_MAINAPP_FIRSTTIME:
@@ -138,6 +168,7 @@ void MainApp::mainApp( void * pvParameters )
                     case EM_MAINAPP_SEND_PASS:
                     break;                     
             }
+            delay(1);
         }
     }
     
