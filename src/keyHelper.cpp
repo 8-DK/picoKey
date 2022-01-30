@@ -111,10 +111,10 @@ void KeyHelper::keyTask( void * pvParameters )
         }
         for(int i = 0 ; i < TOTAL_KEY_COUNT ;i++)
         {
-            if(keyPressed[i] == PRESSED)
+            if((keyPressed[i] == PRESSED))
             {                                        
-                gpio_set_irq_enabled_with_callback(pinNums[i], GPIO_IRQ_EDGE_RISE , true, &gpio_callback);                
                 keyPressed[i] = RELEASED;
+                gpio_set_irq_enabled_with_callback(pinNums[i], GPIO_IRQ_EDGE_RISE , true, &gpio_callback);                                
             }
         }  
         delay(1);
