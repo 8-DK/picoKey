@@ -28,7 +28,7 @@ uint32_t MainApp::inUnlkSeq = 0;
 int MainApp::currentKeyIndex = 0;
 
 // uint32_t MainApp::startAddress = (uint32_t) (XIP_BASE+ 0x103ff000);
-#define FLASH_TARGET_OFFSET (1792 * 1024)
+#define FLASH_TARGET_OFFSET (2044 * 1024)
 uint8_t * MainApp::startAddress = (uint8_t *) (XIP_BASE + FLASH_TARGET_OFFSET);
 
 MainApp::MainApp()
@@ -37,9 +37,7 @@ MainApp::MainApp()
     {
         mUnlockSeq =  0;
         mListCount = 0;
-    }
-    // storeListInEeprom();
-    // readListFromEeprom();
+    }    
 }
 
 MainApp::~MainApp()
@@ -57,9 +55,9 @@ void MainApp::storeListInEeprom()
     for(int i = 0 ; i < mListCount ; i++)
     {
         char listData[100] = {0};    
-        sprintf(listData,"E%d,Password%d",i);
-        for(int m = 0 ; m < 100 ; m ++)
-            buffer[j++] = listData[m];
+        sprintf(listData,"%d,Password",i);
+        mPrintf("%s",listData);
+        memcpy(buffer+j+(i*100),listData,100);
     }
     flash_range_erase(FLASH_TARGET_OFFSET, FLASH_SECTOR_SIZE);
     flash_range_program(FLASH_TARGET_OFFSET, buffer, FLASH_SECTOR_SIZE);
@@ -102,6 +100,7 @@ void MainApp::vKeyTimeoutCallback( TimerHandle_t xTimer )
 void MainApp::mainApp( void * pvParameters )
 {
     readListFromEeprom();
+    // storeListInEeprom();
     xTimerKeyTimeout = xTimerCreate
                    ("KeyTimer",
                      toMs(2000),
@@ -128,16 +127,42 @@ void MainApp::mainApp( void * pvParameters )
                             KEY_ID mKey= KeyHelper::readKeyPress();
                             if(mKey == P1)
                             {
-                                mPrintf("mainAppState---Key P1\n");
+                                mPrintf("mainAppState---Key P1, mUnlockSeq: %x\n",mUnlockSeq);
                                 inUnlkSeq = inUnlkSeq | (1 << currentKeyIndex++);
-                                xTimerStart( xTimerKeyTimeout, 0 ); //restart timer
+                                // xTimerStart( xTimerKeyTimeout, 0 ); //restart timer
                             }
                             else if(mKey == P2)
                             {
-                                mPrintf("mainAppState---Key P2\n");
+                                mPrintf("mainAppState---Key P2, mUnlockSeq: %x\n",mUnlockSeq);
                                 inUnlkSeq = inUnlkSeq | (0 << currentKeyIndex++);       
-                                xTimerStart( xTimerKeyTimeout, 0 ); //restart timer                     
-                            }                                                        
+                                // xTimerStart( xTimerKeyTimeout, 0 ); //restart timer                     
+                            }
+                            else if(mKey == P3) //ok key
+                            {
+                                if(mUnlockSeq == inUnlkSeq)
+                                {
+                                    mPrintf("Device unlocked\n");
+                                    mainAppState = EM_MAINAPP_UNLOCKED;
+                                }
+                                else
+                                {
+                                    mPrintf("Device locked\n");
+                                    mainAppState = EM_MAINAPP_LOCKED;
+                                }
+                                inUnlkSeq = 0;
+                            }
+                            else if(mKey == P4) //ok key
+                            {
+                                mUnlockSeq = inUnlkSeq;
+                                mPrintf("new unlock sequence %x\n",mUnlockSeq);
+                                storeListInEeprom();
+                                inUnlkSeq = 0;
+                            }
+                            else if(mKey == P5) //ok key
+                            {
+                                readListFromEeprom();
+                                DisplayHelper::displaySetState(EM_DISP_LIST);
+                            }
                         }
                     }
                     // mainAppState = EM_MAINAPP_WLCM;
@@ -146,17 +171,26 @@ void MainApp::mainApp( void * pvParameters )
                     case EM_MAINAPP_WLCM:
                         DisplayHelper::displaySetState(EM_DISP_WLCM);
                         delay(2000);
-                        DisplayHelper::displaySetState(EM_DISP_LOCKSCR);
-                        mainAppState = EM_MAINAPP_IDEAL;
+                        if(mUnlockSeq == 0)
+                        {
+                            DisplayHelper::displaySetState(EM_DISP_NEWLOCKSCR);
+                            mainAppState = EM_MAINAPP_IDEAL;
+                        }
+                        else
+                            mainAppState = EM_MAINAPP_LOCKED;
                     break; 
                     
                     case EM_MAINAPP_FIRSTTIME:
                     break; 
                     
                     case EM_MAINAPP_LOCKED:
+                        DisplayHelper::displaySetState(EM_DISP_LOCKSCR);
+                        mainAppState = EM_MAINAPP_IDEAL;
                     break; 
                     
                     case EM_MAINAPP_UNLOCKED:
+                        DisplayHelper::displaySetState(EM_DISP_UNLOCKSCR);
+                        mainAppState = EM_MAINAPP_IDEAL;
                     break; 
                     
                     case EM_MAINAPP_SELECT:

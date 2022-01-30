@@ -32,7 +32,7 @@ TaskHandle_t xDispTaskHandle = NULL;
     xReturned = xTaskCreate(
             DisplayHelper::displayTask,       /* Function that implements the task. */
             "disp task",   /* Text name for the task. */
-            8196,             /* Stack size in words, not bytes. */
+            4096,             /* Stack size in words, not bytes. */
             ( void * ) 1,    /* Parameter passed into the task. */
             1,/* Priority at which the task is created. */
             &xDispTaskHandle );   
@@ -56,13 +56,13 @@ TaskHandle_t xDispTaskHandle = NULL;
     xReturned = xTaskCreate(
             MainApp::mainApp,       /* Function that implements the task. */
             "USB",   /* Text name for the task. */
-            512,             /* Stack size in words, not bytes. */
+            4096,             /* Stack size in words, not bytes. */
             ( void * ) 1,    /* Parameter passed into the task. */
             tskIDLE_PRIORITY,/* Priority at which the task is created. */
             &xDispTaskHandle );   
     vTaskStartScheduler();
-    while(1)
     {
+    while(1)
         configASSERT(0);    /* We should never get here */
     }
 

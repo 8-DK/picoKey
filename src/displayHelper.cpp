@@ -317,8 +317,13 @@ void DisplayHelper::displayLoop()
                 dispState = EM_DISP_IDEAL;
                 break;
 
-                case EM_DISP_LOCKSCR:
+                case EM_DISP_NEWLOCKSCR:
                 myOled.load_bmp((uint8_t*)&screen1,true,0);
+                myOled.dump_buffer(ucBuffer);
+                break;
+
+                case EM_DISP_LOCKSCR:
+                myOled.load_bmp((uint8_t*)&screen3,true,0);
                 myOled.dump_buffer(ucBuffer);
                 dispState = EM_DISP_IDEAL;
                 break;

@@ -44,6 +44,7 @@ public:
     static void storeListInEeprom();
     static void readListFromEeprom();
     static void vKeyTimeoutCallback( TimerHandle_t xTimer );
+    static void mainAppLoop();
     static void mainApp( void * pvParameters );
 };
 
