@@ -17,15 +17,16 @@
 #include "keyHelper.h"
 
 MainApp *MainApp::instance = nullptr;
-uint8_t MainApp::mUnlockSeq = 0;
+uint8_t MainApp::mUnlockSeq[MAX_COUNT_UNLOCK_SEQ] = {0};
+uint8_t MainApp::inUnlkSeq[MAX_COUNT_UNLOCK_SEQ] = {0};
 uint8_t MainApp::mListCount = 0;
 MAINAPP_STATS MainApp::mainAppState = EM_MAINAPP_INIT;
 vector<string> MainApp::userNameList;
 vector<string> MainApp::passwordList;
 TimerHandle_t MainApp::xTimerKeyTimeout;
 
-uint32_t MainApp::inUnlkSeq = 0;
 int MainApp::currentKeyIndex = 0;
+int MainApp::currentSeqInd = 0;
 
 // uint32_t MainApp::startAddress = (uint32_t) (XIP_BASE+ 0x103ff000);
 #define FLASH_TARGET_OFFSET (2044 * 1024)
@@ -33,9 +34,8 @@ uint8_t * MainApp::startAddress = (uint8_t *) (XIP_BASE + FLASH_TARGET_OFFSET);
 
 MainApp::MainApp()
 {
-    if( (mUnlockSeq == 0xFF) || (mListCount == 0xFF))
+    if(mListCount == 0xFF)
     {
-        mUnlockSeq =  0;
         mListCount = 0;
     }    
 }
@@ -47,31 +47,37 @@ MainApp::~MainApp()
 
 void MainApp::storeListInEeprom()
 {
+    taskENTER_CRITICAL();
     mListCount = 20;
-    uint8_t buffer[FLASH_SECTOR_SIZE] = {0};
+    uint8_t buffer[4096];
     int j = 0;
     buffer[j++] = mListCount;
-    buffer[j++] = mUnlockSeq;
+    for(int i = 0 ; i < MAX_COUNT_UNLOCK_SEQ ; i ++)
+        buffer[j++] = mUnlockSeq[i];
     for(int i = 0 ; i < mListCount ; i++)
     {
         char listData[100] = {0};    
         sprintf(listData,"%d,Password",i);
         mPrintf("%s",listData);
         memcpy(buffer+j+(i*100),listData,100);
+        delay(100);
     }
-    flash_range_erase(FLASH_TARGET_OFFSET, FLASH_SECTOR_SIZE);
-    flash_range_program(FLASH_TARGET_OFFSET, buffer, FLASH_SECTOR_SIZE);
+    flash_range_erase(FLASH_TARGET_OFFSET, 4096);
+    flash_range_program(FLASH_TARGET_OFFSET, buffer, 4096);
+    taskEXIT_CRITICAL();
 }
 
 void MainApp::readListFromEeprom()
 {
-    mListCount = 0;
-    mUnlockSeq = 0;
+    taskENTER_CRITICAL();
+    mListCount = 0;    
     uint8_t* ptr;
     int j = 0;
 
     mListCount = startAddress[j++];
-    mUnlockSeq = startAddress[j++];
+    for(int i = 0 ; i < MAX_COUNT_UNLOCK_SEQ ; i++)
+        mUnlockSeq[i] = startAddress[j+i];
+    j = j + MAX_COUNT_UNLOCK_SEQ;
     vector<string> m_dispList;
     for(int i = 0 ; i < mListCount ; i++)
     {
@@ -80,25 +86,31 @@ void MainApp::readListFromEeprom()
         m_dispList.push_back(listData);
     }
     DisplayHelper::getInstance()->updateList(m_dispList);
+    taskEXIT_CRITICAL();
+    mPrintf("Old unlock sequence : ");
+    for(int i = 0 ; i < MAX_COUNT_UNLOCK_SEQ ; i++)
+       mPrintf("%d)[%d]\r\n",i,mUnlockSeq[i]);
+    mPrintf("\n");
 }
 
 void MainApp::vKeyTimeoutCallback( TimerHandle_t xTimer )
 {
-    mPrintf("------------------\n");
-    for(int i=0 ; i < currentKeyIndex ; i++)
-    {       
-        if(inUnlkSeq & (1 << i))
-             mPrintf("unlock[%d] - P1\n",i);
-        else
-             mPrintf("unlock[%d] - P2\n",i);
-    }    
-    mPrintf("------------------\n");
-    inUnlkSeq = 0;
-    currentKeyIndex = 0;
+    // mPrintf("------------------\n");
+    // for(int i=0 ; i < currentKeyIndex ; i++)
+    // {       
+    //     if(inUnlkSeq & (1 << i))
+    //          mPrintf("unlock[%d] - P1\n",i);
+    //     else
+    //          mPrintf("unlock[%d] - P2\n",i);
+    // }    
+    // mPrintf("------------------\n");
+    // inUnlkSeq = 0;
+    // currentKeyIndex = 0;
 }
 
 void MainApp::mainApp( void * pvParameters )
 {
+    delay(3000);
     readListFromEeprom();
     // storeListInEeprom();
     xTimerKeyTimeout = xTimerCreate
@@ -126,20 +138,24 @@ void MainApp::mainApp( void * pvParameters )
                         {                                                                                                    
                             KEY_ID mKey= KeyHelper::readKeyPress();
                             if(mKey == P1)
-                            {
-                                mPrintf("mainAppState---Key P1, mUnlockSeq: %x\n",mUnlockSeq);
-                                inUnlkSeq = inUnlkSeq | (1 << currentKeyIndex++);
+                            {                        
+                                if(currentSeqInd >= MAX_COUNT_UNLOCK_SEQ)     
+                                    break;   
+                                inUnlkSeq[currentSeqInd++] = 1;
+                                mPrintf("Key P1");
                                 // xTimerStart( xTimerKeyTimeout, 0 ); //restart timer
                             }
                             else if(mKey == P2)
-                            {
-                                mPrintf("mainAppState---Key P2, mUnlockSeq: %x\n",mUnlockSeq);
-                                inUnlkSeq = inUnlkSeq | (0 << currentKeyIndex++);       
+                            {                                
+                                if(currentSeqInd >= MAX_COUNT_UNLOCK_SEQ)     
+                                   break;
+                                inUnlkSeq[currentSeqInd++] = 2; 
+                                mPrintf("Key P2");
                                 // xTimerStart( xTimerKeyTimeout, 0 ); //restart timer                     
                             }
                             else if(mKey == P3) //ok key
                             {
-                                if(mUnlockSeq == inUnlkSeq)
+                                if(memcmp(&mUnlockSeq,&inUnlkSeq,MAX_COUNT_UNLOCK_SEQ) == 0)
                                 {
                                     mPrintf("Device unlocked\n");
                                     mainAppState = EM_MAINAPP_UNLOCKED;
@@ -149,14 +165,20 @@ void MainApp::mainApp( void * pvParameters )
                                     mPrintf("Device locked\n");
                                     mainAppState = EM_MAINAPP_LOCKED;
                                 }
-                                inUnlkSeq = 0;
+                                    mPrintf("unlock sequence : ");
+                                    for(int i = 0 ; i < MAX_COUNT_UNLOCK_SEQ ; i++)
+                                        mPrintf("%d)[%d]==[%d]\r\n",i,mUnlockSeq[i],inUnlkSeq[i]);
+                                    mPrintf("\n");
+                                memset(inUnlkSeq,0,MAX_COUNT_UNLOCK_SEQ);
+                                currentSeqInd = 0;
                             }
                             else if(mKey == P4) //ok key
                             {
-                                mUnlockSeq = inUnlkSeq;
+                                memcpy(&mUnlockSeq,&inUnlkSeq,MAX_COUNT_UNLOCK_SEQ);
                                 mPrintf("new unlock sequence %x\n",mUnlockSeq);
                                 storeListInEeprom();
-                                inUnlkSeq = 0;
+                                memset(inUnlkSeq,0,MAX_COUNT_UNLOCK_SEQ);
+                                currentSeqInd = 0;
                             }
                             else if(mKey == P5) //ok key
                             {
@@ -190,6 +212,9 @@ void MainApp::mainApp( void * pvParameters )
                     
                     case EM_MAINAPP_UNLOCKED:
                         DisplayHelper::displaySetState(EM_DISP_UNLOCKSCR);
+                        delay(2000);
+                        readListFromEeprom();                        
+                        DisplayHelper::displaySetState(EM_DISP_LIST);
                         mainAppState = EM_MAINAPP_IDEAL;
                     break; 
                     
