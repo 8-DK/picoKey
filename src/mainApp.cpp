@@ -126,6 +126,7 @@ void MainApp::mainApp( void * pvParameters )
         EventBits_t xEventGroupValue;
         while(1)
         {
+            KEY_ID mKey= KeyHelper::readKeyPress();
             switch(mainAppState)
             {
                     case EM_MAINAPP_INIT:
@@ -135,14 +136,14 @@ void MainApp::mainApp( void * pvParameters )
 
                     case EM_MAINAPP_IDEAL:
                     {
-                        {                                                                                                    
-                            KEY_ID mKey= KeyHelper::readKeyPress();
+                        {                                                                                                                                
                             if(mKey == P1)
                             {                        
                                 if(currentSeqInd >= MAX_COUNT_UNLOCK_SEQ)     
                                     break;   
                                 inUnlkSeq[currentSeqInd++] = 1;
                                 mPrintf("Key P1");
+                                DisplayHelper::writeToDisp(0, (12*currentSeqInd)+12,4,(char*)"*", FONT_12x16,0,1);
                                 // xTimerStart( xTimerKeyTimeout, 0 ); //restart timer
                             }
                             else if(mKey == P2)
@@ -151,18 +152,25 @@ void MainApp::mainApp( void * pvParameters )
                                    break;
                                 inUnlkSeq[currentSeqInd++] = 2; 
                                 mPrintf("Key P2");
+                                DisplayHelper::writeToDisp(0, (12*currentSeqInd)+12, 4,(char*)"*", FONT_12x16,0,1);
                                 // xTimerStart( xTimerKeyTimeout, 0 ); //restart timer                     
                             }
                             else if(mKey == P3) //ok key
                             {
                                 if(memcmp(&mUnlockSeq,&inUnlkSeq,MAX_COUNT_UNLOCK_SEQ) == 0)
                                 {
-                                    mPrintf("Device unlocked\n");
+                                    mPrintf("Device unlocked\n");                                    
+                                    DisplayHelper::displaySetState(EM_DISP_UNLOCKSCR);
+                                    delay(2000);
+                                    readListFromEeprom();                        
+                                    DisplayHelper::displaySetState(EM_DISP_LIST);
                                     mainAppState = EM_MAINAPP_UNLOCKED;
                                 }
                                 else
                                 {
                                     mPrintf("Device locked\n");
+                                    DisplayHelper::writeToDisp(0, 12, 4,(char*)"Invalid PIN", FONT_8x8,0,1);
+                                    delay(2000);
                                     mainAppState = EM_MAINAPP_LOCKED;
                                 }
                                     mPrintf("unlock sequence : ");
@@ -211,20 +219,42 @@ void MainApp::mainApp( void * pvParameters )
                     break; 
                     
                     case EM_MAINAPP_UNLOCKED:
-                        DisplayHelper::displaySetState(EM_DISP_UNLOCKSCR);
-                        delay(2000);
-                        readListFromEeprom();                        
-                        DisplayHelper::displaySetState(EM_DISP_LIST);
-                        mainAppState = EM_MAINAPP_IDEAL;
+                            if(mKey == P1)
+                            {     
+                                taskENTER_CRITICAL();
+                                 DisplayHelper::listSelUp();                   
+                                 taskEXIT_CRITICAL();
+                            }
+                            else if(mKey == P2)
+                            {  
+                                taskENTER_CRITICAL();
+                                DisplayHelper::listSelDown();
+                                taskEXIT_CRITICAL();
+                            }
+                            else if(mKey == P3) //ok key
+                            {
+                                DisplayHelper::displaySetState(EM_DISP_TYPE_USER);
+                                 mainAppState = EM_MAINAPP_SEND_USERNAME;
+                            }                       
                     break; 
                     
                     case EM_MAINAPP_SELECT:
                     break; 
                     
-                    case EM_MAINAPP_SEND_USERNAEM:
+                    case EM_MAINAPP_SEND_USERNAME:
+                            if(mKey == P3) //ok key
+                            {
+                                DisplayHelper::displaySetState(EM_DISP_TYPE_PASS);
+                                mainAppState = EM_MAINAPP_SEND_PASS;
+                            }
                     break; 
                     
                     case EM_MAINAPP_SEND_PASS:
+                            if(mKey == P3) //ok key
+                            {
+                                DisplayHelper::displaySetState(EM_DISP_LIST);
+                                mainAppState = EM_MAINAPP_UNLOCKED;
+                            }
                     break;                     
             }
             delay(1);

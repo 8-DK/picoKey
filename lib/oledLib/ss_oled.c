@@ -1339,6 +1339,14 @@ unsigned char c, *s, ucTemp[40];
     {
       x = pOLED->iCursorX; y = pOLED->iCursorY;
     }
+    else if(x == -1 )
+    {
+      x = pOLED->iCursorX; pOLED->iCursorY = y; // set the new cursor position
+    }
+    else if(y == -1)
+    {
+      pOLED->iCursorX = x; y = pOLED->iCursorY; // set the new cursor position
+    }
     else
     {
       pOLED->iCursorX = x; pOLED->iCursorY = y; // set the new cursor position

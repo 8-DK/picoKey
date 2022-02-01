@@ -13,6 +13,7 @@
 #include "displayHelper.h"
 #include "pico/stdlib.h"
 #include "images.h"
+#include "usbHelper.h"
 
 DisplayHelper *DisplayHelper::instance = nullptr;
 vector<string> DisplayHelper::dispList;
@@ -226,12 +227,33 @@ void DisplayHelper::showlist1(vector<string> m_dispList)
         
         myOled.dump_buffer(ucBuffer);
 
-        curretScrollerIndex++;
+        // curretScrollerIndex++;
 
         curretScrollerIndex = (curretScrollerIndex%totalListCount);
 
         // vTaskDelay(2000 / portTICK_PERIOD_MS);
     }        
+}
+
+void DisplayHelper::writeToDisp(int iScrollX, int x, int y, char *szMsg, int iSize, bool bInvert, bool bRender)
+{
+    myOled.write_string(iScrollX, x, y, szMsg, iSize, bInvert, bRender);
+}
+
+void DisplayHelper::listSelUp(){
+    curretScrollerIndex--;
+    if(curretScrollerIndex < 0)
+        curretScrollerIndex = totalListCount;
+    mPrintf("curretScrollerIndex: %d\r\n",curretScrollerIndex);
+    showlist1(dispList);        
+}
+
+void DisplayHelper::listSelDown(){
+    curretScrollerIndex++;
+    if(curretScrollerIndex >= totalListCount)
+        curretScrollerIndex = 0;
+    mPrintf("curretScrollerIndex: %d\r\n",curretScrollerIndex);
+    showlist1(dispList);
 }
 
 void DisplayHelper::displaySetState(DISP_STATS mDispState)
@@ -341,18 +363,20 @@ void DisplayHelper::displayLoop()
                 break;
 
                 case EM_DISP_SUCCESS:
-                myOled.load_bmp((uint8_t*)&screen4,true,0);
-                myOled.dump_buffer(ucBuffer);
+
                 dispState = EM_DISP_IDEAL;
                 break;
 
                 case EM_DISP_TYPE_USER:
-                myOled.load_bmp((uint8_t*)&screen5,true,0);
+                myOled.load_bmp((uint8_t*)&screen4,true,0);
                 myOled.dump_buffer(ucBuffer);
+
                 dispState = EM_DISP_IDEAL;
                 break;
 
                 case EM_DISP_TYPE_PASS:
+                myOled.load_bmp((uint8_t*)&screen5,true,0);
+                myOled.dump_buffer(ucBuffer);
                 dispState = EM_DISP_IDEAL;
                 break;
 

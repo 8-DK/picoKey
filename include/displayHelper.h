@@ -52,18 +52,10 @@ public:
     static void showlist1(vector<string> m_dispList);
     static void updateList(vector<string> m_dispList);
 
+    static void writeToDisp(int iScrollX, int x, int y, char *szMsg, int iSize, bool bInvert, bool bRender);
     //disp controls
-    static void listSelUp(){
-        curretScrollerIndex--;
-        if(curretScrollerIndex < 0)
-            curretScrollerIndex = totalListCount;
-    }
-
-    static void listSelDown(){
-        curretScrollerIndex++;
-        if(curretScrollerIndex >= totalListCount)
-            curretScrollerIndex = 0;
-    }
+    static void listSelUp();
+    static void listSelDown();
 };
 
 #endif
