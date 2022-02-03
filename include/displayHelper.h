@@ -24,6 +24,8 @@
 #define OLED_WIDTH 128
 #define OLED_HEIGHT 64
 
+typedef void (*ListFunc)(vector<string> m_dispList);
+
 class DisplayHelper{
 
     // static const unsigned char screen1;
@@ -36,6 +38,7 @@ class DisplayHelper{
     static int curretScrollerIndex;
     static int totalListCount;
     static DISP_STATS dispState;
+    static ListFunc currListFunction;
 public: 
     static auto *getInstance() {
         if (!instance)
@@ -50,10 +53,13 @@ public:
     static void scrnWithLockMsg(string message);
     static void showlist(string message);
     static void showlist1(vector<string> m_dispList);
+    static void showlist2(vector<string> m_dispList);
     static void updateList(vector<string> m_dispList);
 
     static void writeToDisp(int iScrollX, int x, int y, char *szMsg, int iSize, bool bInvert, bool bRender);
     //disp controls
+    static int getCurrOptInd();
+    static void resetListInd(int newIndex = 0);
     static void listSelUp();
     static void listSelDown();
 };

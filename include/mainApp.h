@@ -35,6 +35,7 @@ class MainApp
 
     static int currentKeyIndex;
     static int currentSeqInd;
+    static int setNewUnlockSeq;
 
 public: 
     static auto *getInstance() {
@@ -44,6 +45,7 @@ public:
     }
     MainApp();
     ~MainApp();
+    static void eraseEeprom();
     static void storeListInEeprom();
     static void readListFromEeprom();
     static void vKeyTimeoutCallback( TimerHandle_t xTimer );

@@ -27,6 +27,7 @@ TimerHandle_t MainApp::xTimerKeyTimeout;
 
 int MainApp::currentKeyIndex = 0;
 int MainApp::currentSeqInd = 0;
+int MainApp::setNewUnlockSeq = 0;
 
 // uint32_t MainApp::startAddress = (uint32_t) (XIP_BASE+ 0x103ff000);
 #define FLASH_TARGET_OFFSET (2044 * 1024)
@@ -43,6 +44,13 @@ MainApp::MainApp()
 MainApp::~MainApp()
 {
 
+}
+
+void MainApp::eraseEeprom()
+{
+    taskENTER_CRITICAL();
+    flash_range_erase(FLASH_TARGET_OFFSET, 4096);
+    taskEXIT_CRITICAL();
 }
 
 void MainApp::storeListInEeprom()
@@ -110,7 +118,7 @@ void MainApp::vKeyTimeoutCallback( TimerHandle_t xTimer )
 
 void MainApp::mainApp( void * pvParameters )
 {
-    delay(3000);
+    delay(1000);
     readListFromEeprom();
     // storeListInEeprom();
     xTimerKeyTimeout = xTimerCreate
@@ -157,8 +165,28 @@ void MainApp::mainApp( void * pvParameters )
                             }
                             else if(mKey == P3) //ok key
                             {
+                                if(setNewUnlockSeq == 1) //ok key
+                                {
+                                    if(currentSeqInd < MAX_COUNT_UNLOCK_SEQ-1)     
+                                    {
+                                        DisplayHelper::writeToDisp(0, 12, 4,(char*)"Need 6 digits", FONT_8x8,0,1);
+                                        delay(2000);
+                                        mainAppState = EM_MAINAPP_FIRSTTIME;
+                                        break;     
+                                    }
+                                    memcpy(&mUnlockSeq,&inUnlkSeq,MAX_COUNT_UNLOCK_SEQ);
+                                    mPrintf("new unlock sequence %x\n",mUnlockSeq);
+                                    storeListInEeprom();
+                                    setNewUnlockSeq = 0;
+                                    DisplayHelper::writeToDisp(0, 12, 4,(char*)"Sequence Saved", FONT_8x8,0,1);
+                                    delay(2000);
+                                    mainAppState = EM_MAINAPP_LOCKED;
+                                    break;
+                                }
                                 if(memcmp(&mUnlockSeq,&inUnlkSeq,MAX_COUNT_UNLOCK_SEQ) == 0)
                                 {
+                                    memset(inUnlkSeq,0,MAX_COUNT_UNLOCK_SEQ);
+                                    currentSeqInd = 0;         
                                     mPrintf("Device unlocked\n");                                    
                                     DisplayHelper::displaySetState(EM_DISP_UNLOCKSCR);
                                     delay(2000);
@@ -173,47 +201,50 @@ void MainApp::mainApp( void * pvParameters )
                                     delay(2000);
                                     mainAppState = EM_MAINAPP_LOCKED;
                                 }
-                                    mPrintf("unlock sequence : ");
-                                    for(int i = 0 ; i < MAX_COUNT_UNLOCK_SEQ ; i++)
-                                        mPrintf("%d)[%d]==[%d]\r\n",i,mUnlockSeq[i],inUnlkSeq[i]);
-                                    mPrintf("\n");
+                                mPrintf("unlock sequence : ");
+                                for(int i = 0 ; i < MAX_COUNT_UNLOCK_SEQ ; i++)
+                                    mPrintf("%d)[%d]==[%d]\r\n",i,mUnlockSeq[i],inUnlkSeq[i]);
+                                mPrintf("\n");
                                 memset(inUnlkSeq,0,MAX_COUNT_UNLOCK_SEQ);
                                 currentSeqInd = 0;
                             }
                             else if(mKey == P4) //ok key
                             {
-                                memcpy(&mUnlockSeq,&inUnlkSeq,MAX_COUNT_UNLOCK_SEQ);
-                                mPrintf("new unlock sequence %x\n",mUnlockSeq);
-                                storeListInEeprom();
-                                memset(inUnlkSeq,0,MAX_COUNT_UNLOCK_SEQ);
-                                currentSeqInd = 0;
-                            }
-                            else if(mKey == P5) //ok key
-                            {
-                                readListFromEeprom();
-                                DisplayHelper::displaySetState(EM_DISP_LIST);
+                                if(setNewUnlockSeq == 1) //ok key
+                                {                                    
+                                    mainAppState = EM_MAINAPP_FIRSTTIME;                                    
+                                }
+                                else
+                                {
+                                     mainAppState = EM_MAINAPP_LOCKED;
+                                }
                             }
                         }
                     }
-                    // mainAppState = EM_MAINAPP_WLCM;
                     break; 
                     
                     case EM_MAINAPP_WLCM:
                         DisplayHelper::displaySetState(EM_DISP_WLCM);
                         delay(2000);
-                        if(mUnlockSeq == 0)
+                        if(memcmp(mUnlockSeq,inUnlkSeq,MAX_COUNT_UNLOCK_SEQ) == 0)
                         {
-                            DisplayHelper::displaySetState(EM_DISP_NEWLOCKSCR);
-                            mainAppState = EM_MAINAPP_IDEAL;
+                            setNewUnlockSeq = 1;
+                            mainAppState = EM_MAINAPP_FIRSTTIME;
                         }
                         else
                             mainAppState = EM_MAINAPP_LOCKED;
                     break; 
                     
-                    case EM_MAINAPP_FIRSTTIME:
+                    case EM_MAINAPP_FIRSTTIME:        
+                        memset(inUnlkSeq,0,MAX_COUNT_UNLOCK_SEQ);
+                        currentSeqInd = 0;         
+                        DisplayHelper::displaySetState(EM_DISP_NEWLOCKSCR);
+                        mainAppState = EM_MAINAPP_IDEAL;                    
                     break; 
                     
                     case EM_MAINAPP_LOCKED:
+                        memset(inUnlkSeq,0,MAX_COUNT_UNLOCK_SEQ);
+                        currentSeqInd = 0;         
                         DisplayHelper::displaySetState(EM_DISP_LOCKSCR);
                         mainAppState = EM_MAINAPP_IDEAL;
                     break; 
@@ -222,8 +253,8 @@ void MainApp::mainApp( void * pvParameters )
                             if(mKey == P1)
                             {     
                                 taskENTER_CRITICAL();
-                                 DisplayHelper::listSelUp();                   
-                                 taskEXIT_CRITICAL();
+                                DisplayHelper::listSelUp();                   
+                                taskEXIT_CRITICAL();
                             }
                             else if(mKey == P2)
                             {  
@@ -234,11 +265,59 @@ void MainApp::mainApp( void * pvParameters )
                             else if(mKey == P3) //ok key
                             {
                                 DisplayHelper::displaySetState(EM_DISP_TYPE_USER);
-                                 mainAppState = EM_MAINAPP_SEND_USERNAME;
+                                mainAppState = EM_MAINAPP_SEND_USERNAME;
+                            } 
+                            else if(mKey == P4) //Open Menu
+                            {
+                                vector<string> optionList;
+                                optionList.push_back("New unlock sequence");
+                                optionList.push_back("Erase Device");
+                                optionList.push_back("Add new entry");
+                                optionList.push_back("Log out");  
+                                taskENTER_CRITICAL();                      
+                                DisplayHelper::showlist2(optionList);
+                                taskEXIT_CRITICAL();
+                                mainAppState = EM_MAINAPP_SELECT;
                             }                       
                     break; 
                     
                     case EM_MAINAPP_SELECT:
+                    {
+                        if(mKey == P1)
+                        {     
+                            taskENTER_CRITICAL();
+                            DisplayHelper::listSelUp();                   
+                            taskEXIT_CRITICAL();
+                        }
+                        else if(mKey == P2)
+                        {  
+                            taskENTER_CRITICAL();
+                            DisplayHelper::listSelDown();
+                            taskEXIT_CRITICAL();
+                        }
+                        else if(mKey == P3) //ok key
+                        {
+                            if(DisplayHelper::getCurrOptInd() == 0)                            
+                            {
+                                setNewUnlockSeq = 1;
+                                mainAppState = EM_MAINAPP_FIRSTTIME;
+                            }
+                            else if(DisplayHelper::getCurrOptInd() == 1)                            
+                            {
+                                eraseEeprom();
+                            }
+                            else if(DisplayHelper::getCurrOptInd() == 2)                            
+                            {
+                                eraseEeprom();
+                            }
+                            else if(DisplayHelper::getCurrOptInd() == 3)                            
+                            {
+                                memset(inUnlkSeq,0,MAX_COUNT_UNLOCK_SEQ);
+                                currentSeqInd = 0;
+                                mainAppState = EM_MAINAPP_LOCKED;
+                            }
+                        } 
+                    }
                     break; 
                     
                     case EM_MAINAPP_SEND_USERNAME:
