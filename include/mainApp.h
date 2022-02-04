@@ -18,10 +18,13 @@
 #define ListCountAddr UnlocSeqAddr+1
 #define ListDataAddr  ListCountAddr+1
 
+#define MAX_COUNT_UNLOCK_SEQ 6
 class MainApp
 {
     static MainApp *instance;
-    static uint8_t mUnlockSeq;
+    static uint8_t mUnlockSeq[MAX_COUNT_UNLOCK_SEQ];
+    static uint8_t inUnlkSeq[MAX_COUNT_UNLOCK_SEQ];
+    
     static uint8_t mListCount;
     static uint8_t * startAddress;
     static vector<string> userNameList;
@@ -30,8 +33,9 @@ class MainApp
     static MAINAPP_STATS mainAppState;
     static TimerHandle_t xTimerKeyTimeout;
 
-    static uint32_t inUnlkSeq;
     static int currentKeyIndex;
+    static int currentSeqInd;
+    static int setNewUnlockSeq;
 
 public: 
     static auto *getInstance() {
@@ -41,9 +45,11 @@ public:
     }
     MainApp();
     ~MainApp();
+    static void eraseEeprom();
     static void storeListInEeprom();
     static void readListFromEeprom();
     static void vKeyTimeoutCallback( TimerHandle_t xTimer );
+    static void mainAppLoop();
     static void mainApp( void * pvParameters );
 };
 

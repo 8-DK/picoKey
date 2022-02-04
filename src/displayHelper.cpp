@@ -13,6 +13,7 @@
 #include "displayHelper.h"
 #include "pico/stdlib.h"
 #include "images.h"
+#include "usbHelper.h"
 
 DisplayHelper *DisplayHelper::instance = nullptr;
 vector<string> DisplayHelper::dispList;
@@ -22,6 +23,8 @@ uint8_t DisplayHelper::raspberry26x32[] = {0x0, 0x0, 0xe, 0x7e, 0xfe, 0xff, 0xff
 int DisplayHelper::curretScrollerIndex = 0;
 int DisplayHelper::totalListCount = 0;
 DISP_STATS DisplayHelper::dispState =  EM_DISP_IDEAL;
+
+ListFunc DisplayHelper::currListFunction;
 
 DisplayHelper::DisplayHelper()
 {
@@ -177,6 +180,7 @@ void DisplayHelper::showlist1(vector<string> m_dispList)
     int scrollerPosition = 0;
     
     int pageStart = 0;
+    currListFunction = DisplayHelper::showlist1;
     // while(1)
     {
         totalListCount = (int)dispList.size(); 
@@ -222,16 +226,125 @@ void DisplayHelper::showlist1(vector<string> m_dispList)
         myOled.write_string(0, 0, 4, (char *)" ",  FONT_12x16, 0, 0);
         myOled.write_string(0, 0, 6, (char *)" ",  FONT_12x16, 0, 0);
 
-        myOled.write_string(0, 0, (curretScrollerIndex%4)*2, (char *)">",  FONT_12x16, 0, 0);
+        myOled.write_string(0, 0, (curretScrollerIndex%listDispCount)*2, (char *)">",  FONT_12x16, 0, 0);
         
         myOled.dump_buffer(ucBuffer);
 
-        curretScrollerIndex++;
+        // curretScrollerIndex++;
 
         curretScrollerIndex = (curretScrollerIndex%totalListCount);
 
         // vTaskDelay(2000 / portTICK_PERIOD_MS);
     }        
+}
+
+void DisplayHelper::showlist2(vector<string> m_dispList)
+{    
+    dispList = m_dispList;
+    int listDispCount  = 8;
+    int scrollerPosn = 0;  
+    int minScrollerH = 4;
+    
+    int scrollerH = 0;
+    int scrollerPosition = 0;
+    
+    int pageStart = 0;
+    currListFunction = DisplayHelper::showlist2;
+    // while(1)
+    {
+        totalListCount = (int)dispList.size(); 
+        if(totalListCount <= 0) 
+            return;
+        myOled.fill(0, 0);
+        float divn = (float)curretScrollerIndex/(float)listDispCount; 
+        pageStart = (int)divn*listDispCount;   
+     
+        if((curretScrollerIndex!=0) && (totalListCount!=0))
+            scrollerPosition =(int)((curretScrollerIndex*100)/totalListCount);
+
+        scrollerPosition = Utils.mapInt(scrollerPosition,0,100,0,63);
+
+        //trim scroller goin out display
+        if((scrollerPosition+scrollerH) > 63)
+        {
+            scrollerH = 63-scrollerPosition;
+        }
+        else
+        {
+            scrollerH = (int) (totalListCount/listDispCount); //eg total = 20 , disp cnt = 4,  scroller height = 20/4 = 5px
+            scrollerH = (int)63/scrollerH;
+            if(scrollerH < 4 )
+                scrollerH = 4;
+            else if(scrollerH > 63)
+                scrollerH = 63; 
+        }
+        if(totalListCount > pageStart)
+            myOled.write_string(0, 8, 0, (char *)dispList.at(pageStart).c_str(), FONT_8x8, 0, 0);
+        if(totalListCount > pageStart+1)
+            myOled.write_string(0, 8, 1, (char *)dispList.at(pageStart+1).c_str(), FONT_8x8, 0, 0);
+        if(totalListCount > pageStart+2)
+            myOled.write_string(0, 8, 2, (char *)dispList.at(pageStart+2).c_str(),  FONT_8x8, 0, 0);
+        if(totalListCount > pageStart+3)
+            myOled.write_string(0, 8, 3, (char *)dispList.at(pageStart+3).c_str(),  FONT_8x8, 0, 0);
+        if(totalListCount > pageStart+4)
+            myOled.write_string(0, 8, 4, (char *)dispList.at(pageStart+4).c_str(), FONT_8x8, 0, 0);
+        if(totalListCount > pageStart+5)
+            myOled.write_string(0, 8, 5, (char *)dispList.at(pageStart+5).c_str(), FONT_8x8, 0, 0);
+        if(totalListCount > pageStart+6)
+            myOled.write_string(0, 8, 6, (char *)dispList.at(pageStart+6).c_str(),  FONT_8x8, 0, 0);
+        if(totalListCount > pageStart+7)
+            myOled.write_string(0, 8, 7, (char *)dispList.at(pageStart+7).c_str(),  FONT_8x8, 0, 0);
+
+        myOled.draw_rectangle(118,scrollerPosition,127,scrollerPosition+scrollerH,1,0);
+        myOled.draw_rectangle(123,0,123,63,1,0);
+
+        myOled.write_string(0, 0, 0, (char *)" ", FONT_8x8, 0, 0);
+        myOled.write_string(0, 0, 1, (char *)" ", FONT_8x8, 0, 0);
+        myOled.write_string(0, 0, 2, (char *)" ", FONT_8x8, 0, 0);
+        myOled.write_string(0, 0, 3, (char *)" ", FONT_8x8, 0, 0);
+        myOled.write_string(0, 0, 4, (char *)" ", FONT_8x8, 0, 0);
+        myOled.write_string(0, 0, 5, (char *)" ", FONT_8x8, 0, 0);
+        myOled.write_string(0, 0, 6, (char *)" ", FONT_8x8, 0, 0);
+        myOled.write_string(0, 0, 7, (char *)" ", FONT_8x8, 0, 0);
+
+        myOled.write_string(0, 0, (curretScrollerIndex%listDispCount)*1, (char *)">",  FONT_8x8, 0, 0);
+        
+        myOled.dump_buffer(ucBuffer);
+
+        curretScrollerIndex = (curretScrollerIndex%totalListCount);
+    }        
+}
+
+void DisplayHelper::writeToDisp(int iScrollX, int x, int y, char *szMsg, int iSize, bool bInvert, bool bRender)
+{
+    myOled.write_string(iScrollX, x, y, szMsg, iSize, bInvert, bRender);
+}
+
+int DisplayHelper::getCurrOptInd()
+{
+    return curretScrollerIndex;
+}
+
+void DisplayHelper::resetListInd(int newIndex)
+{
+    curretScrollerIndex = 0;
+    currListFunction(dispList);
+}
+
+void DisplayHelper::listSelUp(){
+    curretScrollerIndex--;
+    if(curretScrollerIndex < 0)
+        curretScrollerIndex = totalListCount;    
+    // showlist1(dispList);    
+    currListFunction(dispList);    
+}
+
+void DisplayHelper::listSelDown(){
+    curretScrollerIndex++;
+    if(curretScrollerIndex >= totalListCount)
+        curretScrollerIndex = 0;    
+    // showlist1(dispList);
+    currListFunction(dispList);
 }
 
 void DisplayHelper::displaySetState(DISP_STATS mDispState)
@@ -317,8 +430,14 @@ void DisplayHelper::displayLoop()
                 dispState = EM_DISP_IDEAL;
                 break;
 
-                case EM_DISP_LOCKSCR:
+                case EM_DISP_NEWLOCKSCR:
                 myOled.load_bmp((uint8_t*)&screen1,true,0);
+                myOled.dump_buffer(ucBuffer);
+                dispState = EM_DISP_IDEAL;
+                break;
+
+                case EM_DISP_LOCKSCR:
+                myOled.load_bmp((uint8_t*)&screen3,true,0);
                 myOled.dump_buffer(ucBuffer);
                 dispState = EM_DISP_IDEAL;
                 break;
@@ -336,22 +455,25 @@ void DisplayHelper::displayLoop()
                 break;
 
                 case EM_DISP_SUCCESS:
-                myOled.load_bmp((uint8_t*)&screen4,true,0);
-                myOled.dump_buffer(ucBuffer);
+
                 dispState = EM_DISP_IDEAL;
                 break;
 
                 case EM_DISP_TYPE_USER:
+                myOled.load_bmp((uint8_t*)&screen4,true,0);
+                myOled.dump_buffer(ucBuffer);
+
+                dispState = EM_DISP_IDEAL;
+                break;
+
+                case EM_DISP_TYPE_PASS:
                 myOled.load_bmp((uint8_t*)&screen5,true,0);
                 myOled.dump_buffer(ucBuffer);
                 dispState = EM_DISP_IDEAL;
                 break;
 
-                case EM_DISP_TYPE_PASS:
-                dispState = EM_DISP_IDEAL;
-                break;
-
                 case EM_DISP_LIST:
+                DisplayHelper::resetListInd();
                 showlist1(dispList);
                 delay(2000);
                 dispState = EM_DISP_IDEAL;
