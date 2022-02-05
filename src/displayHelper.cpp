@@ -24,7 +24,7 @@ int DisplayHelper::curretScrollerIndex = 0;
 int DisplayHelper::totalListCount = 0;
 DISP_STATS DisplayHelper::dispState =  EM_DISP_IDEAL;
 
-ListFunc DisplayHelper::currListFunction;
+ListFunc DisplayHelper::currListFunction = nullptr;
 
 DisplayHelper::DisplayHelper()
 {
@@ -183,10 +183,14 @@ void DisplayHelper::showlist1(vector<string> m_dispList)
     currListFunction = DisplayHelper::showlist1;
     // while(1)
     {
-        totalListCount = (int)dispList.size(); 
-        if(totalListCount <= 0) 
-            return;
         myOled.fill(0, 0);
+        totalListCount = (int)dispList.size(); 
+        if(totalListCount <= 0)
+        {
+            myOled.write_string(0, 8, 3, (char *)"<NO DATA>", FONT_8x8, 0, 1);
+            return;
+        }
+    
         float divn = (float)curretScrollerIndex/(float)listDispCount; 
         pageStart = (int)divn*listDispCount;   
      
@@ -252,10 +256,14 @@ void DisplayHelper::showlist2(vector<string> m_dispList)
     currListFunction = DisplayHelper::showlist2;
     // while(1)
     {
-        totalListCount = (int)dispList.size(); 
-        if(totalListCount <= 0) 
-            return;
         myOled.fill(0, 0);
+        totalListCount = (int)dispList.size(); 
+        if(totalListCount <= 0)
+        {            
+            myOled.write_string(0, 8, 3, (char *)"<NO DATA>", FONT_8x8, 0, 1);
+            return;
+        }
+        
         float divn = (float)curretScrollerIndex/(float)listDispCount; 
         pageStart = (int)divn*listDispCount;   
      
@@ -328,23 +336,24 @@ int DisplayHelper::getCurrOptInd()
 void DisplayHelper::resetListInd(int newIndex)
 {
     curretScrollerIndex = 0;
-    currListFunction(dispList);
+    if(currListFunction != nullptr)
+        currListFunction(dispList);
 }
 
 void DisplayHelper::listSelUp(){
     curretScrollerIndex--;
     if(curretScrollerIndex < 0)
-        curretScrollerIndex = totalListCount;    
-    // showlist1(dispList);    
-    currListFunction(dispList);    
+        curretScrollerIndex = dispList.size()-1;    
+    if(currListFunction != nullptr)
+        currListFunction(dispList);    
 }
 
 void DisplayHelper::listSelDown(){
     curretScrollerIndex++;
-    if(curretScrollerIndex >= totalListCount)
+    if(curretScrollerIndex >= dispList.size())
         curretScrollerIndex = 0;    
-    // showlist1(dispList);
-    currListFunction(dispList);
+    if(currListFunction != nullptr)    
+        currListFunction(dispList);
 }
 
 void DisplayHelper::displaySetState(DISP_STATS mDispState)

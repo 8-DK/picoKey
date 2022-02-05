@@ -311,7 +311,8 @@ char const* string_desc_arr [] =
   "TinyUSB",                     // 1: Manufacturer
   "TinyUSB Device",              // 2: Product
   "123456",                      // 3: Serials, should use chip ID
-  "TinyUSB CDC",                 // 4: CDC Interface  
+  "TinyUSB CDC",                 // 4: CDC Interface
+  "TinyUSB WebUSB"               // 5: Vendor Interface
 };
 
 static uint16_t _desc_str[32];
