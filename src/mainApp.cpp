@@ -83,10 +83,18 @@ void MainApp::readListFromEeprom()
     int j = 0;
 
     mListCount = startAddress[j++];
+    if(mListCount > 35)
+        mListCount = 0;
+
     for(int i = 0 ; i < MAX_COUNT_UNLOCK_SEQ ; i++)
+    {
         mUnlockSeq[i] = startAddress[j+i];
+        if((mUnlockSeq[i] != 0) && (mUnlockSeq[i] != 1))
+            mUnlockSeq[i] = 0;
+    }
     j = j + MAX_COUNT_UNLOCK_SEQ;
     vector<string> m_dispList;
+    
     for(int i = 0 ; i < mListCount ; i++)
     {
         char listData[100] = {0};    
@@ -97,7 +105,9 @@ void MainApp::readListFromEeprom()
     taskEXIT_CRITICAL();
     mPrintf("Old unlock sequence : ");
     for(int i = 0 ; i < MAX_COUNT_UNLOCK_SEQ ; i++)
-       mPrintf("%d)[%d]\r\n",i,mUnlockSeq[i]);
+    {
+        mPrintf("%d)[%d]\r\n",i,mUnlockSeq[i]);
+    }       
     mPrintf("\n");
 }
 
@@ -305,6 +315,7 @@ void MainApp::mainApp( void * pvParameters )
                             else if(DisplayHelper::getCurrOptInd() == 1)                            
                             {
                                 eraseEeprom();
+                                mainAppState = EM_MAINAPP_LOCKED;
                             }
                             else if(DisplayHelper::getCurrOptInd() == 2)                            
                             {
@@ -317,6 +328,10 @@ void MainApp::mainApp( void * pvParameters )
                                 mainAppState = EM_MAINAPP_LOCKED;
                             }
                         } 
+                        else if(mKey == P4) //back
+                        {
+                            mainAppState = EM_MAINAPP_UNLOCKED;
+                        }
                     }
                     break; 
                     
