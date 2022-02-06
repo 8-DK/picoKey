@@ -170,6 +170,20 @@ void USBHelper::sendToVcom(uint8_t itf, uint8_t buf[], uint32_t count)
   tud_cdc_n_write_flush(itf);
 }
 
+void USBHelper::sendStringToKeyBoard(const char* buffer,uint16_t len)
+{
+  uint8_t const conv_table[128][2] =  { HID_ASCII_TO_KEYCODE };
+  uint8_t modifier = 0;
+  if(len == 0)
+    len = strlen(buffer);
+  for(int i = 0 ; i < len; i++)
+  {        
+    modifier = 0;
+    if ( conv_table[buffer[i]][0] ) modifier = KEYBOARD_MODIFIER_LEFTSHIFT;  
+    sendKeyStroke(conv_table[buffer[i]][1],modifier);
+    delay(20);
+  }
+}
 // send key strokes with modifier
 void USBHelper::sendKeyStroke(uint8_t keyCode, uint8_t modifier)
 {
@@ -236,25 +250,32 @@ void USBHelper::usbLoop()
       // and REMOTE_WAKEUP feature is enabled by host
       tud_remote_wakeup();
     }
-    
+    else
+    {    
       // Send the 1st of report chain, the rest will be sent by tud_hid_report_complete_cb()
       // send_hid_report(REPORT_ID_KEYBOARD, btn);
       if(sendKeyBoardData == 2) //release key here
       {
+        taskENTER_CRITICAL();
         tud_hid_keyboard_report(REPORT_ID_KEYBOARD, 0, NULL);
+        taskEXIT_CRITICAL();
         sendKeyBoardData = sendNextData = 0;
       }
       else if(sendGamePadData == 2)
       {
         gamepadData.hat = GAMEPAD_HAT_CENTERED;
         gamepadData.buttons = 0;
+        taskENTER_CRITICAL();
         tud_hid_report(REPORT_ID_GAMEPAD, &gamepadData, sizeof(gamepadData));
+        taskEXIT_CRITICAL();
         sendGamePadData = sendNextData = 0;
       }
       else if(sendMultimediaData == 2)
       {
         uint16_t empty_key = 0;
+        taskENTER_CRITICAL();
         tud_hid_report(REPORT_ID_CONSUMER_CONTROL, &empty_key, 2);
+        taskEXIT_CRITICAL();
         sendMultimediaData = sendNextData = 0;
       }
 
@@ -262,27 +283,36 @@ void USBHelper::usbLoop()
       {
         if(sendKeyBoardData == 1)
         {
+          taskENTER_CRITICAL();
           tud_hid_keyboard_report(REPORT_ID_KEYBOARD, keyboardData.modifier, keyboardData.keycode);
+          taskEXIT_CRITICAL();
           sendNextData = 0;
           sendKeyBoardData ++;
         }
         else if(sendMouseData == 1)
         {
+          taskENTER_CRITICAL();
           tud_hid_mouse_report(REPORT_ID_MOUSE, mouseData.buttons, mouseData.x, mouseData.y, 0, 0);
+          taskEXIT_CRITICAL();
           sendMouseData = sendNextData = 0;
         }
         else if(sendGamePadData == 1)
         {
+          taskENTER_CRITICAL();
           tud_hid_report(REPORT_ID_GAMEPAD, &gamepadData, sizeof(gamepadData));
+          taskEXIT_CRITICAL();
           sendGamePadData++;
           sendNextData = 0;
         }
         else if(sendMultimediaData == 1)
         {
+          taskENTER_CRITICAL();
           tud_hid_report(REPORT_ID_CONSUMER_CONTROL, &multimediKey, 2);
+          taskEXIT_CRITICAL();
           sendMultimediaData++;
           sendNextData = 0;
         }
+      }
       } //if(sendNextData == 1)        
   }
 }

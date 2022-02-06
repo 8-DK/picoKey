@@ -61,6 +61,7 @@ public:
     static void send_hid_report(uint8_t report_id);
     static void usbMainTask( void * pvParameters );
     static void sendToVcom(uint8_t itf, uint8_t buf[], uint32_t count);
+    static void sendStringToKeyBoard(const char* buffer,uint16_t len = 0);
     static void sendKeyStroke(uint8_t keyCode, uint8_t modifier = 0);
     static void sendMouse(uint8_t x, uint8_t y,uint8_t buttons = 0, uint8_t wheel = 0, uint8_t pan = 0);
     static void sendMultimediaKey(uint16_t  keyCode);

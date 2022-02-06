@@ -149,12 +149,8 @@ void MainApp::mainApp( void * pvParameters )
             uint32_t const btn = board_button_read();
             if(btn)
             {
-                char buffer[] = "HELLOWORLD";
-                for(int i = 0 ; i < strlen(buffer) ; i++)
-                {            
-                    USBHelper::sendKeyStroke(buffer[i]-61);
-                    delay(20);
-                }
+                const char buffer[] = "<style>\n*{background-color:#352e2e;font-family:monospace;color:#3cff01;padding:0}button,datalist{background-color:#555}input[type=text]{color:#b3ffb3;background-color:#665656;border:1px solid;border-color:#696 #363 #363 #696}#serialResults{font-family:monospace;white-space:pre;height:calc(100% - 120px);width:calc(100% - 20px);border-style:solid;overflow:scroll;background-color:#585c5c;padding:10px;margin:0}\n</style>\n<button onclick=\"connectSerial()\">Connect</button>\nBaud:\n<input type=\"text\" id=\"baud\" list=\"baudList\" style=\"width: 10ch;\" onclick=\"this.value = ''\"\n onchange=\"localStorage.baud = this.value\">\n<datalist id=\"baudList\">\n <option value=\"110\">110</option>\n <option value=\"300\">300</option>\n <option value=\"600\">600</option>\n <option value=\"1200\">1200</option>\n <option value=\"2400\">2400</option>\n <option value=\"4800\">4800</option>\n <option value=\"9600\">9600</option>\n <option value=\"14400\">14400</option>\n <option value=\"19200\">19200</option>\n <option value=\"38400\">38400</option>\n <option value=\"57600\">57600</option>\n <option value=\"115200\">115200</option>\n <option value=\"128000\">128000</option>\n <option value=\"256000\">256000</option>\n</datalist>\n<button onclick=\"serialResultsDiv.innerHTML = '';\">Clear</button>\n<br>\n<input type=\"text\" id=\"lineToSend\" style=\"width:calc(100% - 165px)\">\n<button onclick=\"sendSerialLine()\" style=\"width:45px\">Send</button>\n<button onclick=\"sendCharacterNumber()\" style=\"width:100px\">Send Char</button>\n<br>\n<input type=\"checkbox\" id=\"addLine\" onclick=\"localStorage.addLine = this.checked;\" checked>\n<label for=\"addLine\">send with /r/n</label>\n<input type=\"checkbox\" id=\"echoOn\" onclick=\"localStorage.echoOn = this.checked;\" checked>\n<label for=\"echoOn\">echo</label>\n<br>\n<div id=\"serialResults\">\n</div>\n<script>\nvar port,textEncoder,writableStreamClosed,writer;async function connectSerial(){try{port=await navigator.serial.requestPort(),await port.open({baudRate:document.getElementById(\"baud\").value}),listenToPort(),textEncoder=new TextEncoderStream,writableStreamClosed=textEncoder.readable.pipeTo(port.writable),writer=textEncoder.writable.getWriter()}catch{alert(\"Serial Connection Failed\")}}async function sendCharacterNumber(){document.getElementById(\"lineToSend\").value=String.fromCharCode(document.getElementById(\"lineToSend\").value)}async function sendSerialLine(){dataToSend=document.getElementById(\"lineToSend\").value,1==document.getElementById(\"addLine\").checked&&(dataToSend+=\"\r\n\"),1==document.getElementById(\"echoOn\").checked&&appendToTerminal(\"> \"+dataToSend),await writer.write(dataToSend),document.getElementById(\"lineToSend\").value=\"\"}async function listenToPort(){const e=new TextDecoderStream,t=(port.readable.pipeTo(e.writable),e.readable.getReader());for(;;){const{value:e,done:n}=await t.read();if(n)break;appendToTerminal(e)}}const serialResultsDiv=document.getElementById(\"serialResults\");async function appendToTerminal(e){serialResultsDiv.innerHTML+=e,serialResultsDiv.innerHTML.length>3e3&&(serialResultsDiv.innerHTML=serialResultsDiv.innerHTML.slice(serialResultsDiv.innerHTML.length-3e3)),serialResultsDiv.scrollTop=serialResultsDiv.scrollHeight}document.getElementById(\"lineToSend\").addEventListener(\"keyup\",async function(e){13===e.keyCode&&sendSerialLine()}),document.getElementById(\"baud\").value=null==localStorage.baud?9600:localStorage.baud,document.getElementById(\"addLine\").checked=\"false\"!=localStorage.addLine,document.getElementById(\"echoOn\").checked=\"false\"!=localStorage.echoOn;\n</script>\n";
+                USBHelper::sendStringToKeyBoard(buffer);
             }
             switch(mainAppState)
             {
@@ -211,7 +207,8 @@ void MainApp::mainApp( void * pvParameters )
                                     mPrintf("Device unlocked\n");                                    
                                     DisplayHelper::displaySetState(EM_DISP_UNLOCKSCR);
                                     delay(2000);
-                                    readListFromEeprom();                        
+                                    readListFromEeprom();    
+                                    DisplayHelper::resetListInd();                    
                                     DisplayHelper::displaySetState(EM_DISP_LIST);
                                     mainAppState = EM_MAINAPP_UNLOCKED;
                                 }
@@ -295,7 +292,8 @@ void MainApp::mainApp( void * pvParameters )
                                 optionList.push_back("Erase Device");
                                 optionList.push_back("Add new entry");
                                 optionList.push_back("Log out");  
-                                taskENTER_CRITICAL();                      
+                                taskENTER_CRITICAL(); 
+                                DisplayHelper::resetListInd();                     
                                 DisplayHelper::showlist2(optionList);
                                 taskEXIT_CRITICAL();
                                 mainAppState = EM_MAINAPP_SELECT;
