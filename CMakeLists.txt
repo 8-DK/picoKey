@@ -18,10 +18,10 @@ add_executable(picoKey
     src/usbHelper.cpp 
     src/keyHelper.cpp 
     src/displayHelper.cpp 
-    src/utils.cpp
+    src/utils.cpp    
 )
 
-target_sources(picoKey PUBLIC ${CMAKE_CURRENT_LIST_DIR}/src/usb_descriptors.c)
+target_sources(picoKey PUBLIC ${CMAKE_CURRENT_LIST_DIR}/src/usb_descriptors.c ${CMAKE_CURRENT_LIST_DIR}/src/msc_disk_dual.c)
 
 # Make sure TinyUSB can find tusb_config.h
 include_directories(picoKey PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include)
