@@ -145,6 +145,17 @@ void MainApp::mainApp( void * pvParameters )
         while(1)
         {
             KEY_ID mKey= KeyHelper::readKeyPress();
+                    
+            uint32_t const btn = board_button_read();
+            if(btn)
+            {
+                char buffer[] = "HELLOWORLD";
+                for(int i = 0 ; i < strlen(buffer) ; i++)
+                {            
+                    USBHelper::sendKeyStroke(buffer[i]-61);
+                    delay(20);
+                }
+            }
             switch(mainAppState)
             {
                     case EM_MAINAPP_INIT:

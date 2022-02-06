@@ -36,9 +36,20 @@ void mPrintf( const char * format, ... );
 
 class USBHelper
 {
-
     static USBHelper *instance;
+
+    static hid_keyboard_report_t keyboardData;
+    static hid_mouse_report_t mouseData;
+    static hid_gamepad_report_t gamepadData;    
+    static uint16_t multimediKey;
+
+    static int sendKeyBoardData;
+    static int sendMouseData;    
+    static int sendGamePadData;
+    static int sendMultimediaData;
 public: 
+    static int sendNextData;
+
     static auto *getInstance() {
         if (!instance)
             instance = new USBHelper;
@@ -47,9 +58,13 @@ public:
     static uint32_t blink_interval_ms;
     
     USBHelper();
-    static void send_hid_report(uint8_t report_id, uint32_t btn);
+    static void send_hid_report(uint8_t report_id);
     static void usbMainTask( void * pvParameters );
     static void sendToVcom(uint8_t itf, uint8_t buf[], uint32_t count);
+    static void sendKeyStroke(uint8_t keyCode, uint8_t modifier = 0);
+    static void sendMouse(uint8_t x, uint8_t y,uint8_t buttons = 0, uint8_t wheel = 0, uint8_t pan = 0);
+    static void sendMultimediaKey(uint16_t  keyCode);
+    static void sendGamePad(uint8_t x, uint8_t y, uint8_t z = 0, uint8_t rz = 0,uint8_t rx = 0 ,uint8_t ry = 0,uint8_t hat = 0, uint32_t buttons = 0);
     static void usbLoop();
 };
 
