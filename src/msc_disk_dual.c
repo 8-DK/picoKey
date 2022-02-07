@@ -1,30 +1,10 @@
-/* 
- * The MIT License (MIT)
- *
- * Copyright (c) 2019 Ha Thach (tinyusb.org)
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- *
- */
-
+#include "hardware/flash.h"
 #include "bsp/board.h"
 #include "tusb.h"
+#include "FreeRTOS.h"
+#include "task.h"
+#include <hardware/flash.h>
+#include <hardware/sync.h>
 
 #if CFG_TUD_MSC
 
@@ -32,114 +12,23 @@
 // We will use Flash as read-only disk with board that has
 // CFG_EXAMPLE_MSC_READONLY defined
 // #define CFG_EXAMPLE_MSC_READONLY
+#define FLASH_FS_TARGET_OFFSET (1024 * 1024)
+uint8_t * flashFsStartAddress = (uint8_t *) (XIP_BASE + FLASH_FS_TARGET_OFFSET);
 
 enum
 {
-  DISK_BLOCK_NUM  = 16, // 8KB is the smallest size that windows allow to mount
-  DISK_BLOCK_SIZE = 512
+  DISK_BLOCK_NUM  = 10, // 8KB is the smallest size that windows allow to mount
+  DISK_BLOCK_SIZE = 4096
 };
 
 
 //--------------------------------------------------------------------+
 // LUN 0
 //--------------------------------------------------------------------+
-#define README0_CONTENTS \
- "LUN1: This is tinyusb's MassStorage Class demo.asdjask djsahdkhaskd hIf you find any bugs or get any questions, feel free to file anissue at github.com/hathach/tinyusb"
-
-#define README0_SIZE sizeof(README0_CONTENTS)
-
 #ifdef CFG_EXAMPLE_MSC_READONLY
 const
 #endif
-uint8_t msc_disk0[DISK_BLOCK_NUM][DISK_BLOCK_SIZE] =
-{
-  //------------- Block0: Boot Sector -------------//
-  // byte_per_sector    = DISK_BLOCK_SIZE; fat12_sector_num_16  = DISK_BLOCK_NUM;
-  // sector_per_cluster = 1; reserved_sectors = 1;
-  // fat_num            = 1; fat12_root_entry_num = 16;
-  // sector_per_fat     = 1; sector_per_track = 1; head_num = 1; hidden_sectors = 0;
-  // drive_number       = 0x80; media_type = 0xf8; extended_boot_signature = 0x29;
-  // filesystem_type    = "FAT12   "; volume_serial_number = 0x1234; volume_label = "TinyUSB 0  ";
-  // FAT magic code at offset 510-511
-  {
-      0xEB, 0x3C, 0x90, 0x4D, 0x53, 0x44, 0x4F, 0x53, 0x35, 0x2E, 0x30, 0x00, 0x02, 0x01, 0x01, 0x00,
-      0x01, 0x10, 0x00, 0x10, 0x00, 0xF8, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00,
-      0x00, 0x00, 0x00, 0x00, 0x80, 0x00, 0x29, 0x34, 0x12, 0x00, 0x00, 'T' , 'i' , 'n' , 'y' , 'U' ,
-      'S' , 'B' , ' ' , '0' , ' ' , ' ' , 0x46, 0x41, 0x54, 0x31, 0x32, 0x20, 0x20, 0x20, 0x00, 0x00,
-
-      // Zero up to 2 last bytes of FAT magic code
-      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-
-      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-
-      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-
-      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x55, 0xAA
-  },
-
-  //------------- Block1: FAT12 Table -------------//
-  {
-      0xF8, 0xFF, 0xFF, 0xFF, 0x0F // // first 2 entries must be F8FF, third entry is cluster end of readme file
-  },
-
-  //------------- Block2: Root Directory -------------//
-  {
-    //   first entry is volume label
-      'T' , 'i' , 'n' , 'y' , 'U' , 'S' , 'B' , ' ' , '0' , ' ' , ' ' , 0x08, 0x00, 0x00, 0x00, 0x00,
-      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x4F, 0x6D, 0x65, 0x43, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    //   // second entry is readme file
-    //   'R' , 'E' , 'A' , 'D' , 'M' , 'E' , '0' , ' ' , 'T' , 'X' , 'T' , 0x20, 0x00, 0xC6, 0x52, 0x6D,
-    //   0x65, 0x43, 0x65, 0x43, 0x00, 0x00, 0x88, 0x6D, 0x65, 0x43, 0x02, 0x00,      
-    //   (README0_SIZE & 0xFF), (README0_SIZE>>8)&0xFF, (README0_SIZE>>16)&0xFF, (README0_SIZE>>24)&0xFF // readme's files size (4 Bytes)
-   	0x41,	0x54,	0x00,	0x45,	0x00,	0x2E,	0x00,	0x68,	0x00,	0x74,	0x00,	0x0F,	0x00,	0x6C,	0x6D,	0x00,	//AT.E...h.t...lm.
-	0x6C,	0x00,	0x00,	0x00,	0xFF,	0xFF,	0xFF,	0xFF,	0xFF,	0xFF,	0x00,	0x00,	0xFF,	0xFF,	0xFF,	0xFF,	//l...............
-	0x54,	0x45,	0x34,	0x34,	0x42,	0x43,	0x7E,	0x31,	0x48,	0x54,	0x4D,	0x20,	0x00,	0x8A,	0xD2,	0xAE,	//TE44BC~1HTM,	0x....
-	0x47,	0x54,	0x47,	0x54,	0x00,	0x00,	0x6C,	0x9E,	0x46,	0x54,	0x05,	0x00,	0x74,	0x0D,	0x00,	0x00	//GTGT..l.FT..t...
- },
- {},
- {},
- {},
-//   //------------- Block3: Readme Content -------------//  
-{"<style>*{background-color:#352e2e;font-family:monospace;color:#3cff01;padding:0}button,datalist{background-color:#555}input[type=text]{color:#b3ffb3;background-color:#665656;border:1px solid;border-color:#696 #363 #363 #696}#serialResults{font-family:monospace;white-space:pre;height:calc(100% - 120px);width:calc(100% - 20px);border-style:solid;overflow:scroll;background-color:#585c5c;padding:10px;margin:0}</style><button onclick=\"connectSerial()\">Connect</button>  Baud: <input type=\"text\" id=\"baud\" list=\"ba"},
-
-{"udList\" style=\"width: 10ch;\" onclick=\"this.value=''\" onchange=\"localStorage.baud=this.value\"><datalist id=\"baudList\"> <option value=\"110\">110</option><option value=\"300\">300</option> <option value=\"600\">600</option> <option value=\"1200\">1200</option> <option value=\"2400\">2400</option> <option value=\"4800\">4800</option> <option value=\"9600\">9600</option> <option value=\"14400\">14400</option> <option value=\"19200\">19200</option> <option value=\"38400\">38400</option> <option value=\"57600\">57600</option> <option "},
-
-{"value=\"115200\">115200</option> <option value=\"128000\">128000</option> <option value=\"256000\">256000</option></datalist><button onclick=\"serialResultsDiv.innerHTML='';\">Clear</button><br><input type=\"text\" id=\"lineToSend\" style=\"width:calc(100% - 165px)\"><button onclick=\"sendSerialLine()\" style=\"width:45px\">Send</button><button onclick=\"sendCharacterNumber()\" style=\"width:100px\">Send Char</button><br><input type=\"checkbox\" id=\"addLine\" onclick=\"localStorage.addLine=this.checked;\" checked><label for=\"addLine\""},
-
-{">send with /r/n  </label><input type=\"checkbox\" id=\"echoOn\" onclick=\"localStorage.echoOn=this.checked;\" checked><label for=\"echoOn\">echo</label><br><div id=\"serialResults\"></div><script>var port,textEncoder,writableStreamClosed,writer;async function connectSerial(){try{port=await navigator.serial.requestPort(),await port.open({baudRate:document.getElementById(\"baud\").value}),listenToPort(),textEncoder=new TextEncoderStream,writableStreamClosed=textEncoder.readable.pipeTo(port.writable),writer=textEncoder.wr"},
-
-{"itable.getWriter()}catch{alert(\"Serial Connection Failed\")}}async function sendCharacterNumber(){document.getElementById(\"lineToSend\").value=String.fromCharCode(document.getElementById(\"lineToSend\").value)}async function sendSerialLine(){dataToSend=document.getElementById(\"lineToSend\").value,1==document.getElementById(\"addLine\").checked&&(dataToSend+=\"\\r\\n\"),1==document.getElementById(\"echoOn\").checked&&appendToTerminal(\"> \"+dataToSend),await writer.write(dataToSend),document.getElementById(\"lineToSend\").va"},
-
-{"lue=\"\"}async function listenToPort(){const e=new TextDecoderStream,t=(port.readable.pipeTo(e.writable),e.readable.getReader());for(;;){const{value:e,done:n}=await t.read();if(n)break;appendToTerminal(e)}}const serialResultsDiv=document.getElementById(\"serialResults\");async function appendToTerminal(e){serialResultsDiv.innerHTML+=e,serialResultsDiv.innerHTML.length>3e3&&(serialResultsDiv.innerHTML=serialResultsDiv.innerHTML.slice(serialResultsDiv.innerHTML.length-3e3)),serialResultsDiv.scrollTop=serialResult"},
-
-{"sDiv.scrollHeight}document.getElementById(\"lineToSend\").addEventListener(\"keyup\",async function(e){13===e.keyCode&&sendSerialLine()}),document.getElementById(\"baud\").value=null==localStorage.baud?9600:localStorage.baud,document.getElementById(\"addLine\").checked=\"false\"!=localStorage.addLine,document.getElementById(\"echoOn\").checked=\"false\"!=localStorage.echoOn;</script>"}
-//   README0_CONTENTS
-};
-
+// uint8_t msc_disk0[16][512]={0};
 //--------------------------------------------------------------------+
 // LUN 1
 //--------------------------------------------------------------------+
@@ -151,7 +40,7 @@ issue at github.com/hathach/tinyusb"
 #ifdef CFG_EXAMPLE_MSC_READONLY
 const
 #endif
-uint8_t msc_disk1[DISK_BLOCK_NUM][DISK_BLOCK_SIZE] =
+uint8_t msc_disk1[32][512] =
 {
   //------------- Block0: Boot Sector -------------//
   // byte_per_sector    = DISK_BLOCK_SIZE; fat12_sector_num_16  = DISK_BLOCK_NUM;
@@ -256,9 +145,16 @@ bool tud_msc_test_unit_ready_cb(uint8_t lun)
 void tud_msc_capacity_cb(uint8_t lun, uint32_t* block_count, uint16_t* block_size)
 {
   (void) lun;
-
-  *block_count = DISK_BLOCK_NUM;
-  *block_size  = DISK_BLOCK_SIZE;
+  if(lun)
+  {
+      *block_count = 32;
+    *block_size  = 512;
+  }
+  else
+  {
+    *block_count = DISK_BLOCK_NUM;
+    *block_size  = DISK_BLOCK_SIZE;
+  }
 }
 
 // Invoked when received Start Stop Unit command
@@ -290,8 +186,16 @@ int32_t tud_msc_read10_cb(uint8_t lun, uint32_t lba, uint32_t offset, void* buff
   // out of ramdisk
   if ( lba >= DISK_BLOCK_NUM ) return -1;
 
-  uint8_t const* addr = (lun ? msc_disk1[lba] : msc_disk0[lba]) + offset;
-  memcpy(buffer, addr, bufsize);
+  if(lun)
+  {
+    uint8_t const* addr =  msc_disk1[lba] + offset;
+    memcpy(buffer, addr, bufsize);
+  }
+  else
+  {
+     memcpy(buffer, flashFsStartAddress+offset, bufsize); 
+  }
+
 
   return bufsize;
 }
@@ -315,8 +219,20 @@ int32_t tud_msc_write10_cb(uint8_t lun, uint32_t lba, uint32_t offset, uint8_t* 
   if ( lba >= DISK_BLOCK_NUM ) return -1;
 
 #ifndef CFG_EXAMPLE_MSC_READONLY
-  uint8_t* addr = (lun ? msc_disk1[lba] : msc_disk0[lba])  + offset;
-  memcpy(addr, buffer, bufsize);
+  if(lun)
+  {
+    uint8_t* addr =  msc_disk1[lba] + offset;
+    memcpy(addr, buffer, bufsize);
+  }
+  else
+  {
+    taskENTER_CRITICAL();
+    uint32_t stt = save_and_disable_interrupts();
+    flash_range_erase(FLASH_FS_TARGET_OFFSET+offset, FLASH_SECTOR_SIZE);
+    flash_range_program(FLASH_FS_TARGET_OFFSET+offset, buffer, FLASH_SECTOR_SIZE);
+    restore_interrupts(stt);
+    taskEXIT_CRITICAL();
+  }
 #else
   (void) lun; (void) lba; (void) offset; (void) buffer;
 #endif
