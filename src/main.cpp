@@ -1,3 +1,15 @@
+/*
+ * File: main.cpp
+ * Project: picoKey
+ * File Created: Monday, 31st January 2022 12:43:21 am
+ * Author: Dhananjay Khairnar (khairnardm@gmail.com)
+ * -----
+ * Last Modified: Thursday, 10th February 2022 12:02:13 am
+ * Modified By: Dhananjay-Khairnar (khairnardm@gmail.com>)
+ * -----
+ * Copyright 2021 - 2022 https://github.com/8-DK
+ */
+
 #include "common.h"
 #include "mainApp.h"
 #include "ledHelper.h"

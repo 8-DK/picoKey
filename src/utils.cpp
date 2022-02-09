@@ -1,3 +1,15 @@
+/*
+ * File: utils.cpp
+ * Project: picoKey
+ * File Created: Thursday, 20th January 2022 11:55:13 pm
+ * Author: Dhananjay Khairnar (khairnardm@gmail.com)
+ * -----
+ * Last Modified: Thursday, 10th February 2022 12:02:36 am
+ * Modified By: Dhananjay-Khairnar (khairnardm@gmail.com>)
+ * -----
+ * Copyright 2021 - 2022 https://github.com/8-DK
+ */
+
 #include "utils.h"
 
 UtilsClass *UtilsClass::instance=nullptr;
