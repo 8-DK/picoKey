@@ -31,12 +31,15 @@ class MainApp
     static vector<string> passwordList;
 
     static MAINAPP_STATS mainAppState;
-    static TimerHandle_t xTimerKeyTimeout;
+    static TimerHandle_t xTimerCdcDataTimeout;
 
     static int currentKeyIndex;
     static int currentSeqInd;
     static int setNewUnlockSeq;
     static bool isDeviceUnlocked;
+
+    static bool isCommandRcv;
+    static uint8_t currentDataIndex;
 
 public: 
     static auto *getInstance() {
@@ -49,7 +52,7 @@ public:
     static void eraseEeprom();
     static void storeListInEeprom();
     static void readListFromEeprom();
-    static void vKeyTimeoutCallback( TimerHandle_t xTimer );
+    static void vCdcDataTimeoutCallback( TimerHandle_t xTimer );
     static void mainAppLoop();
     static void mainApp( void * pvParameters );
 };

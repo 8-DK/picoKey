@@ -24,12 +24,14 @@ uint8_t MainApp::mListCount = 0;
 MAINAPP_STATS MainApp::mainAppState = EM_MAINAPP_INIT;
 vector<string> MainApp::userNameList;
 vector<string> MainApp::passwordList;
-TimerHandle_t MainApp::xTimerKeyTimeout;
+TimerHandle_t MainApp::xTimerCdcDataTimeout;
 
 int MainApp::currentKeyIndex = 0;
 int MainApp::currentSeqInd = 0;
 int MainApp::setNewUnlockSeq = 0;
 bool MainApp::isDeviceUnlocked = false;
+bool MainApp::isCommandRcv = false;
+uint8_t MainApp::currentDataIndex = 0;
 
 // uint32_t MainApp::startAddress = (uint32_t) (XIP_BASE+ 0x103ff000);
 #define FLASH_TARGET_OFFSET (2044 * 1024)
@@ -113,32 +115,25 @@ void MainApp::readListFromEeprom()
     mPrintf("\n");
 }
 
-void MainApp::vKeyTimeoutCallback( TimerHandle_t xTimer )
+void MainApp::vCdcDataTimeoutCallback( TimerHandle_t xTimer )
 {
-    // mPrintf("------------------\n");
-    // for(int i=0 ; i < currentKeyIndex ; i++)
-    // {       
-    //     if(inUnlkSeq & (1 << i))
-    //          mPrintf("unlock[%d] - P1\n",i);
-    //     else
-    //          mPrintf("unlock[%d] - P2\n",i);
-    // }    
-    // mPrintf("------------------\n");
-    // inUnlkSeq = 0;
-    // currentKeyIndex = 0;
+    isCommandRcv = true;
+    currentDataIndex = 0;
 }
 
 void MainApp::mainApp( void * pvParameters )
-{
+{    
+    char jsonBuffer[200] = {0}; 
+    
     delay(1000);
     readListFromEeprom();
     // storeListInEeprom();
-    xTimerKeyTimeout = xTimerCreate
-                   ("KeyTimer",
-                     toMs(2000),
+    xTimerCdcDataTimeout = xTimerCreate
+                   ("cdcDataTmout",
+                     toMs(500),
                      pdFALSE,
                      ( void * ) 0,
-                     vKeyTimeoutCallback
+                     vCdcDataTimeoutCallback
                    );
     while (1)
     {                     
@@ -153,23 +148,38 @@ void MainApp::mainApp( void * pvParameters )
             {
                 const char buffer[] = "<style>\n*{background-color:#352e2e;font-family:monospace;color:#3cff01;padding:0}button,datalist{background-color:#555}input[type=text]{color:#b3ffb3;background-color:#665656;border:1px solid;border-color:#696 #363 #363 #696}#serialResults{font-family:monospace;white-space:pre;height:calc(100% - 120px);width:calc(100% - 20px);border-style:solid;overflow:scroll;background-color:#585c5c;padding:10px;margin:0}\n</style>\n<button onclick=\"connectSerial()\">Connect</button>\nBaud:\n<input type=\"text\" id=\"baud\" list=\"baudList\" style=\"width: 10ch;\" onclick=\"this.value = ''\"\n onchange=\"localStorage.baud = this.value\">\n<datalist id=\"baudList\">\n <option value=\"110\">110</option>\n <option value=\"300\">300</option>\n <option value=\"600\">600</option>\n <option value=\"1200\">1200</option>\n <option value=\"2400\">2400</option>\n <option value=\"4800\">4800</option>\n <option value=\"9600\">9600</option>\n <option value=\"14400\">14400</option>\n <option value=\"19200\">19200</option>\n <option value=\"38400\">38400</option>\n <option value=\"57600\">57600</option>\n <option value=\"115200\">115200</option>\n <option value=\"128000\">128000</option>\n <option value=\"256000\">256000</option>\n</datalist>\n<button onclick=\"serialResultsDiv.innerHTML = '';\">Clear</button>\n<br>\n<input type=\"text\" id=\"lineToSend\" style=\"width:calc(100% - 165px)\">\n<button onclick=\"sendSerialLine()\" style=\"width:45px\">Send</button>\n<button onclick=\"sendCharacterNumber()\" style=\"width:100px\">Send Char</button>\n<br>\n<input type=\"checkbox\" id=\"addLine\" onclick=\"localStorage.addLine = this.checked;\" checked>\n<label for=\"addLine\">send with /r/n</label>\n<input type=\"checkbox\" id=\"echoOn\" onclick=\"localStorage.echoOn = this.checked;\" checked>\n<label for=\"echoOn\">echo</label>\n<br>\n<div id=\"serialResults\">\n</div>\n<script>\nvar port,textEncoder,writableStreamClosed,writer;async function connectSerial(){try{port=await navigator.serial.requestPort(),await port.open({baudRate:document.getElementById(\"baud\").value}),listenToPort(),textEncoder=new TextEncoderStream,writableStreamClosed=textEncoder.readable.pipeTo(port.writable),writer=textEncoder.writable.getWriter()}catch{alert(\"Serial Connection Failed\")}}async function sendCharacterNumber(){document.getElementById(\"lineToSend\").value=String.fromCharCode(document.getElementById(\"lineToSend\").value)}async function sendSerialLine(){dataToSend=document.getElementById(\"lineToSend\").value,1==document.getElementById(\"addLine\").checked&&(dataToSend+=\"\r\n\"),1==document.getElementById(\"echoOn\").checked&&appendToTerminal(\"> \"+dataToSend),await writer.write(dataToSend),document.getElementById(\"lineToSend\").value=\"\"}async function listenToPort(){const e=new TextDecoderStream,t=(port.readable.pipeTo(e.writable),e.readable.getReader());for(;;){const{value:e,done:n}=await t.read();if(n)break;appendToTerminal(e)}}const serialResultsDiv=document.getElementById(\"serialResults\");async function appendToTerminal(e){serialResultsDiv.innerHTML+=e,serialResultsDiv.innerHTML.length>3e3&&(serialResultsDiv.innerHTML=serialResultsDiv.innerHTML.slice(serialResultsDiv.innerHTML.length-3e3)),serialResultsDiv.scrollTop=serialResultsDiv.scrollHeight}document.getElementById(\"lineToSend\").addEventListener(\"keyup\",async function(e){13===e.keyCode&&sendSerialLine()}),document.getElementById(\"baud\").value=null==localStorage.baud?9600:localStorage.baud,document.getElementById(\"addLine\").checked=\"false\"!=localStorage.addLine,document.getElementById(\"echoOn\").checked=\"false\"!=localStorage.echoOn;\n</script>\n";
                 USBHelper::sendStringToKeyBoard(buffer);
-            }
+            }       
 
+            uint32_t rcvCnt = 0;
+            char tempBuff[64] = {0};   
+            if((rcvCnt = USBHelper::getVcomData((uint8_t*)tempBuff,64,1)) > 0)
             {
-                char rcvBuff[200] = {0};
-                uint32_t rcvCnt = 0;
-                if(rcvCnt = USBHelper::getVcomData((uint8_t*)rcvBuff,200,1) > 0)
+                if((rcvCnt+currentDataIndex) > sizeof(jsonBuffer))
                 {
-                    mPrintf("Buff : %s\n",rcvBuff);
-                    cJSON *root = cJSON_Parse(rcvBuff);
-                    if(root != NULL) 
-                    {
-                        cJSON *commandJsn = cJSON_GetObjectItemCaseSensitive(root, "command");
-			            char *command = cJSON_Print(commandJsn);
-                        USBHelper::
-                    }
-                }  
-            }          
+                    memset(jsonBuffer,0,sizeof(jsonBuffer));
+                    currentDataIndex = 0;
+                }
+                memcpy(jsonBuffer+currentDataIndex,tempBuff,rcvCnt);
+                currentDataIndex += rcvCnt;
+                xTimerStart( xTimerCdcDataTimeout, 0 ); //restart timer                  
+            }  
+            if(isCommandRcv)
+            {
+                isCommandRcv = false;                    
+                // mPrintf("JSON > %s\n",jsonBuffer);
+                cJSON *root = cJSON_Parse(jsonBuffer);
+                if(root != NULL) 
+                {
+                    cJSON *commandJsn = cJSON_GetObjectItemCaseSensitive(root, "command");
+                    cJSON *dataJsn = cJSON_GetObjectItemCaseSensitive(root, "data");
+                    cJSON *currentItemJsn = cJSON_GetObjectItemCaseSensitive(root, "currentItem");
+                    cJSON *totalItemJsn = cJSON_GetObjectItemCaseSensitive(root, "totalItem");
+
+                    mPrintf("command : %s, currentItem : %d, totalItem : %d, data : %s,\n",commandJsn->valuestring,currentItemJsn->valueint,totalItemJsn->valueint,dataJsn->valuestring);
+                    delay(10);
+                }
+                memset(jsonBuffer,0,sizeof(jsonBuffer));
+            }                
 
             switch(mainAppState)
             {
@@ -188,8 +198,7 @@ void MainApp::mainApp( void * pvParameters )
                                     break;   
                                 inUnlkSeq[currentSeqInd++] = 1;
                                 mPrintf("Key P1");
-                                DisplayHelper::writeToDisp(0, (12*currentSeqInd)+12,4,(char*)"*", FONT_12x16,0,1);
-                                // xTimerStart( xTimerKeyTimeout, 0 ); //restart timer
+                                DisplayHelper::writeToDisp(0, (12*currentSeqInd)+12,4,(char*)"*", FONT_12x16,0,1);                                
                             }
                             else if(mKey == P2)
                             {                                
@@ -197,8 +206,7 @@ void MainApp::mainApp( void * pvParameters )
                                    break;
                                 inUnlkSeq[currentSeqInd++] = 2; 
                                 mPrintf("Key P2");
-                                DisplayHelper::writeToDisp(0, (12*currentSeqInd)+12, 4,(char*)"*", FONT_12x16,0,1);
-                                // xTimerStart( xTimerKeyTimeout, 0 ); //restart timer                     
+                                DisplayHelper::writeToDisp(0, (12*currentSeqInd)+12, 4,(char*)"*", FONT_12x16,0,1);                                                     
                             }
                             else if(mKey == P3) //ok key
                             {

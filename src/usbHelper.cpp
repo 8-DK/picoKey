@@ -23,7 +23,7 @@ void mPrintf( const char * format, ... )
   va_list args;
   va_start (args, format);
   vsprintf (buffer,format, args);
-  USBHelper::sendToVcom (0,(uint8_t*)buffer,strlen(buffer));
+  USBHelper::sendToVcom (0,(uint8_t*)buffer,(uint32_t)strlen(buffer));
   va_end (args);
 }
 
