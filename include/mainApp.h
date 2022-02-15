@@ -36,6 +36,7 @@ class MainApp
     static int currentKeyIndex;
     static int currentSeqInd;
     static int setNewUnlockSeq;
+    static bool isDeviceUnlocked;
 
 public: 
     static auto *getInstance() {

@@ -81,6 +81,15 @@ typedef enum MAINAPP_STATS{
     EM_MAINAPP_SEND_PASS,
 }MAINAPP_STATS;
 
+struct request
+{
+    const char *command;    
+    const char *data;    
+    const uint32_t currentItem;
+    const uint32_t totalItem;    
+};
+
+
 //task globals
 #define KEY_TASK_KEY_PRESS_EVENT   (1UL << 0UL) // zero shift for bit0
 

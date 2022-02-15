@@ -159,9 +159,29 @@ void USBHelper::usbMainTask( void * pvParameters )
     }
 }
 
+//read serial port
+uint32_t USBHelper::getVcomData(uint8_t *buff, uint16_t count,uint8_t itf)
+{
+  // for (itf = 0; itf < CFG_TUD_CDC; itf++)
+  {
+    // connected() check for DTR bit
+    // Most but not all terminal client set this when making connection
+    // if ( tud_cdc_n_connected(itf) )
+    {
+      uint32_t availableCnt = 0;
+      if ( availableCnt = tud_cdc_n_available(itf) )
+      {        
+        uint32_t count = tud_cdc_n_read(itf, buff, availableCnt);
+        return count;
+      }
+    }
+  }
+  return 0;
+}
+
 // echo to either Serial0 or Serial1
 // with Serial0 as all lower case, Serial1 as all upper case
-void USBHelper::sendToVcom(uint8_t itf, uint8_t buf[], uint32_t count)
+void USBHelper::sendToVcom(uint8_t itf, uint8_t *buf, uint32_t count)
 {
   for(uint32_t i=0; i<count; i++)
   {
