@@ -22,6 +22,18 @@
  * THE SOFTWARE.
  */
 
+/*
+ * File: usb_descriptors.h
+ * Project: picoKey
+ * File Created: Monday, 10th January 2022 11:59:40 pm
+ * Author: Dhananjay Khairnar (khairnardm@gmail.com)
+ * -----
+ * Last Modified: Thursday, 10th February 2022 12:03:03 am
+ * Modified By: Dhananjay-Khairnar (khairnardm@gmail.com>)
+ * -----
+ * Copyright 2021 - 2022 https://github.com/8-DK
+ */
+
 #ifndef USB_DESCRIPTORS_H_
 #define USB_DESCRIPTORS_H_
 

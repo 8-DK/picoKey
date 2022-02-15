@@ -1,3 +1,15 @@
+/*
+ * File: images.h
+ * Project: picoKey
+ * File Created: Thursday, 27th January 2022 10:03:33 pm
+ * Author: Dhananjay Khairnar (khairnardm@gmail.com)
+ * -----
+ * Last Modified: Thursday, 10th February 2022 12:03:22 am
+ * Modified By: Dhananjay-Khairnar (khairnardm@gmail.com>)
+ * -----
+ * Copyright 2021 - 2022 https://github.com/8-DK
+ */
+
 #ifndef __IMAGES_BMP_H
 #define __IMAGES_BMP_H
 #include <stdlib.h>

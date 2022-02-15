@@ -1,3 +1,15 @@
+/*
+ * File: EEPROM.h
+ * Project: picoKey
+ * File Created: Saturday, 15th January 2022 12:47:56 am
+ * Author: Dhananjay Khairnar (khairnardm@gmail.com)
+ * -----
+ * Last Modified: Thursday, 10th February 2022 12:02:05 am
+ * Modified By: Dhananjay-Khairnar (khairnardm@gmail.com>)
+ * -----
+ * Copyright 2021 - 2022 https://github.com/8-DK
+ */
+
 #ifndef __EEPROM__
 #define __EEPROM__
 

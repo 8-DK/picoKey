@@ -1,3 +1,15 @@
+/*
+ * File: utils.h
+ * Project: picoKey
+ * File Created: Thursday, 20th January 2022 11:48:14 pm
+ * Author: Dhananjay Khairnar (khairnardm@gmail.com)
+ * -----
+ * Last Modified: Thursday, 10th February 2022 12:02:56 am
+ * Modified By: Dhananjay-Khairnar (khairnardm@gmail.com>)
+ * -----
+ * Copyright 2021 - 2022 https://github.com/8-DK
+ */
+
 #ifndef __UTILS_H_
 #define __UTILS_H_
 

@@ -18,10 +18,10 @@ add_executable(picoKey
     src/usbHelper.cpp 
     src/keyHelper.cpp 
     src/displayHelper.cpp 
-    src/utils.cpp
+    src/utils.cpp    
 )
 
-target_sources(picoKey PUBLIC ${CMAKE_CURRENT_LIST_DIR}/src/usb_descriptors.c)
+target_sources(picoKey PUBLIC ${CMAKE_CURRENT_LIST_DIR}/src/usb_descriptors.c ${CMAKE_CURRENT_LIST_DIR}/src/msc_disk_dual.c)
 
 # Make sure TinyUSB can find tusb_config.h
 include_directories(picoKey PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include)
@@ -44,7 +44,7 @@ target_include_directories(FreeRTOS PUBLIC FreeRTOS-Kernel/include include/ Free
 
 # create map/bin/hex/uf2 file in addition to ELF.
 pico_add_extra_outputs(picoKey)
-target_link_libraries(picoKey PUBLIC pico_stdlib hardware_flash tinyusb_device tinyusb_board FreeRTOS pico-cpp hardware_i2c libeeprom liboled)
+target_link_libraries(picoKey PUBLIC pico_stdlib hardware_flash tinyusb_device tinyusb_board FreeRTOS pico-cpp hardware_i2c libeeprom liboled libcJson)
 add_custom_command(TARGET picoKey
         POST_BUILD
         COMMAND arm-none-eabi-size picoKey.elf
