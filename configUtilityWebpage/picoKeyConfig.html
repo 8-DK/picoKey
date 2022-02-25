@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fastest Serial terminal in your browser for Chrome.</title>
+<meta name="Description" content="Set your baud speed and hit connect.
+ A serial terminal that runs with out any plugins in chrome.">
+<script>
+    var port, textEncoder, writableStreamClosed, writer;
+
+    async function connectSerial() {
+        try {
+            // Prompt user to select any serial port.
+            port = await navigator.serial.requestPort();
+            await port.open({ baudRate: document.getElementById("baud").value });
+            listenToPort();
+
+            textEncoder = new TextEncoderStream();
+            writableStreamClosed = textEncoder.readable.pipeTo(port.writable);
+
+            writer = textEncoder.writable.getWriter();
+        } catch {
+            alert("Serial Connection Failed");
+        }
+    }
+
+    async function sendCharacterNumber(){
+       document.getElementById("lineToSend").value = String.fromCharCode(document.getElementById("lineToSend").value);
+    }
+   
+    async function sendSerialLine() {
+        dataToSend = document.getElementById("lineToSend").value;
+        if (document.getElementById("addLine").checked == true) dataToSend = dataToSend + "\r\n";
+        if (document.getElementById("echoOn").checked == true) appendToTerminal("> " + dataToSend);
+        await writer.write(dataToSend);
+        document.getElementById("lineToSend").value = "";
+        //await writer.releaseLock();
+    }
+
+    async function listenToPort() {
+        const textDecoder = new TextDecoderStream();
+        const readableStreamClosed = port.readable.pipeTo(textDecoder.writable);
+        const reader = textDecoder.readable.getReader();
+
+        // Listen to data coming from the serial device.
+        while (true) {
+            const { value, done } = await reader.read();
+            if (done) {
+                // Allow the serial port to be closed later.
+                //reader.releaseLock();
+                break;
+            }
+            // value is a string.
+            appendToTerminal(value);
+        }
+    }
+
+    const serialResultsDiv = document.getElementById("serialResults");
+
+    async function appendToTerminal(newStuff) {
+        serialResultsDiv.innerHTML += newStuff;
+        if (serialResultsDiv.innerHTML.length > 3000) serialResultsDiv.innerHTML = serialResultsDiv.innerHTML.slice(serialResultsDiv.innerHTML.length - 3000);
+
+        //scroll down to bottom of div
+        serialResultsDiv.scrollTop = serialResultsDiv.scrollHeight;
+    }
+
+    document.getElementById("lineToSend").addEventListener("keyup", async function (event) {
+        if (event.keyCode === 13) {
+            sendSerialLine();
+        }
+    })
+
+    document.getElementById("baud").value = (localStorage.baud == undefined ? 9600 : localStorage.baud);
+    document.getElementById("addLine").checked = (localStorage.addLine == "false" ? false : true);
+    document.getElementById("echoOn").checked = (localStorage.echoOn == "false" ? false : true);
+
+</script>
+<style>
+* {
+	box-sizing: border-box;        
+    padding: 0px;
+ }
+
+.menu {
+  float: left;
+  width: 20%;
+  text-align: center;  
+  background-color: #e5e5e5;
+}
+
+.menu a {  
+  background-color: #a5bac4;
+  padding: 8px;
+  margin-top: 7px;
+  display: block;
+  width: 100%;
+  color: white;
+  font-family: "SF Pro Text","SF Pro Icons","AOS Icons","Helvetica Neue",Helvetica,Arial,sans-serif;
+}
+
+.main {
+  float: left;
+  width: 100%;
+  padding: 0 20px;
+}
+
+.right {
+  background-color: #e5e5e5;
+  float: left;
+  width: 20%;
+  padding: 15px;  
+  /*text-align: center;*/
+}
+
+@media only screen and (max-width: 620px) {
+  /* For mobile phones: */
+  .menu, .main, .right {
+    width: 100%;
+  }
+}
+
+.button-15 {
+  background-image: linear-gradient(#64cded99, #808f9c99);
+  border: 1px solid #0077CC;
+  border-radius: 4px;
+  box-sizing: border-box;
+  color: #FFFFFF;
+  cursor: pointer;
+  direction: ltr;
+  display: float;
+  font-family: "SF Pro Text","SF Pro Icons","AOS Icons","Helvetica Neue",Helvetica,Arial,sans-serif;
+  font-size: 17px;
+  font-weight: 400;
+  letter-spacing: -.022em;
+  line-height: 1.47059;
+  min-width: 30px;
+  overflow: visible;
+  padding: 4px 15px;
+  text-align: center;
+  vertical-align: baseline;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  white-space: nowrap;
+  margin:10px
+}
+
+.button-15:disabled {
+  cursor: default;
+  opacity: .3;
+}
+
+.button-15:hover {
+  background-image: linear-gradient(#51A9EE, #147BCD);
+  border-color: #1482D0;
+  text-decoration: none;
+}
+
+.button-15:active {
+  background-image: linear-gradient(#3D94D9, #0067B9);
+  border-color: #006DBC;
+  outline: none;
+}
+
+.button-15:focus {
+  box-shadow: rgba(131, 192, 253, 0.5) 0 0 0 3px;
+  outline: none;
+}
+/*
+    * {
+        background-color: #352e2e;
+        font-family: monospace;
+        color: rgb(60, 255, 1);
+        padding: 0px;
+    }
+*/
+    button,
+    datalist {
+        background-color: rgb(85, 85, 85);
+    }
+	
+/* 
+   input[type=text] {
+        color: rgb(179, 255, 179);
+        background-color: rgb(102, 86, 86);
+        border: 1px solid;
+        border-color: #696 #363 #363 #696;
+    }
+*/	
+    #serialResults {
+		font-family: monospace;
+		white-space: pre;
+		height: calc(100% - 120px);
+		width: 100%;
+		border-style: solid;
+		overflow: scroll;
+		background-image: linear-gradient(#64cded99, #808f9c99);    
+    }
+	/* Create three equal columns that floats next to each other */
+.column {
+  float: left;
+  width: 33.33%;
+  padding: 10px;
+  height: 400px; /* Should be removed. Only for demonstration */
+  margin-bottom : 10px;
+  margin-top : 10px;
+  
+}
+
+/* Clear floats after the columns */
+.row:after {
+  content: "";
+  display: table;
+  clear: both;
+}
+</style>
+</head>
+<body style="font-family:Verdana;color:#aaaaaa;">
+<div style="background-color:#e5e5e5;padding:15px;text-align:center;"> 
+Baud:
+<input  class="button-15" type="text" id="baud" list="baudList" style="width: 10ch;" onclick="this.value = ''" onchange="localStorage.baud = this.value">
+<datalist id="baudList">
+    <option value="110">110</option>
+    <option value="300">300</option>
+    <option value="600">600</option>
+    <option value="1200">1200</option>
+    <option value="2400">2400</option>
+    <option value="4800">4800</option>
+    <option value="9600">9600</option>
+    <option value="14400">14400</option>
+    <option value="19200">19200</option>
+    <option value="38400">38400</option>
+    <option value="57600">57600</option>
+    <option value="115200">115200</option>
+    <option value="128000">128000</option>
+    <option value="256000">256000</option>
+</datalist>
+<button class="button-15" role="button">Connect</button>
+<button class="button-15" onclick="serialResultsDiv.innerHTML = '';">Clear</button>
+<br>
+<input class="button-15" type="text" id="lineToSend" style="width:calc(50%);text-align: left;">
+<button class="button-15" onclick="sendSerialLine()">Send</button>
+<button class="button-15" onclick="sendCharacterNumber()" >Send Char</button>
+<br>
+
+<input type="checkbox" id="addLine" onclick="localStorage.addLine = this.checked;" checked>
+<label for="addLine">send with /r/n</label>
+
+<input type="checkbox" id="echoOn" onclick="localStorage.echoOn = this.checked;" checked>
+<label for="echoOn">echo</label>
+
+
+<br>
+</div>
+
+<div class="row">
+	<div class="column menu" style="width:20%">  
+		<a href="#">Add / Delete / Edit Entry</a>
+		<a href="#">Change PIN</a>
+		<a href="#">Erase Device</a>		
+	</div>
+	<div class="column main" style="width:50%">  
+		<h4>Configuration</h4>  
+	</div>
+	<div class="column right" style="width:30%">  
+		<h4>Logs</h4>
+		<div id="serialResults">	
+		</div>
+	</div>
+</div>
+
+<div style="background-color:#e5e5e5;text-align:center;padding:10px;margin-top:7px;">© copyright 8-Dk</div>
+
+</body>
+</html>
+
