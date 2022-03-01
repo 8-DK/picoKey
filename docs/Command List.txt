@@ -1,0 +1,79 @@
+
+typedef enum COMMAND_CH{
+    EM_GET_DATA_LIST = 'A',    
+    EM_SET_DATA_LIST,
+    EM_GET_DATA_AT_INDEX,
+    EM_SET_DATA_AT_INDEX,
+    EM_ADD_NEW_ENTRY,
+    EM_DELETE_ENTRY_AT,
+    EM_DELETE_ALL_ENTRY,
+    EM_ERASE_DEVICE,
+    EM_LOGOUT,
+    EM_REMOUNT,
+    EM_PLAY_ANIMATION,    
+    EM_COMMAND_CH_MAX
+}COMMAND_CH;
+
+typedef struct command_t
+{
+    const char *command;    
+    const char *data;    
+    const uint32_t currentItem;
+    const uint32_t totalItem;    
+}command_t;
+
+
+Command	:	A	:	EM_GET_DATA_LIST 		:	Read all data list
+
+Command	:	B	:	EM_SET_DATA_LIST 		:	Sned all data list NOT USED ( RAM LIMITATION )
+
+Command	: 	C	:	EM_GET_DATA_AT_INDEX	:	Read data at index location
+												command = "C"   
+												data = ""
+												currentItem = 1 //index number 1-39
+												totalItem = 0
+	
+Command	: 	D	:	EM_SET_DATA_AT_INDEX	:	Write data at index  will replace existing entry
+												command = "D"   
+												data = "username@gmail.com,password" //username,password
+												currentItem = 1 //index number 1-39
+												totalItem = 0
+	
+Command	: 	E	:	EM_ADD_NEW_ENTRY		:	Write data at end of list
+												command = "E"   
+												data = "username@gmail.com,password" //username,password
+												currentItem = 0
+												totalItem = 0	
+												
+Command	: 	F	:	EM_DELETE_ENTRY_AT		:	Delete entry at location and shift all entry above
+												command = "F"   
+												data = ""
+												currentItem = 1 //entry tobe deleted
+												totalItem = 0		
+
+Command	: 	G	:	EM_DELETE_ALL_ENTRY		:	Delete all entry
+												command = "F"   
+												data = ""
+												currentItem = 0
+												totalItem = 0
+
+Command	: 	H	:	EM_ERASE_DEVICE			:	Erase device memory wit data and PIN
+												command = "H"   
+												data = ""
+												currentItem = 0
+												totalItem = 0
+
+Command	: 	I	:	EM_LOGOUT				:	Logout device and turn off usb mass storage
+												command = "I"   
+												data = ""
+												currentItem = 0
+												totalItem = 0
+
+Command	: 	J	:	EM_REMOUNT				:	Remount USB Not inmplimented
+												command = "J"   
+												data = ""
+												currentItem = 0
+												totalItem = 0												
+
+
+

@@ -81,13 +81,30 @@ typedef enum MAINAPP_STATS{
     EM_MAINAPP_SEND_PASS,
 }MAINAPP_STATS;
 
-struct request
+
+typedef enum COMMAND_CH{
+    EM_GET_DATA_LIST = 'A',    
+    EM_SET_DATA_LIST,
+    EM_GET_DATA_AT_INDEX,
+    EM_SET_DATA_AT_INDEX,
+    EM_ADD_NEW_ENTRY,
+    EM_DELETE_ENTRY_AT,
+    EM_DELETE_ALL_ENTRY,
+    EM_ERASE_DEVICE,
+    EM_LOGOUT,
+    EM_REMOUNT,
+    EM_PLAY_ANIMATION,    
+    EM_COMMAND_CH_MAX
+}COMMAND_CH;
+
+
+typedef struct command_t
 {
     const char *command;    
     const char *data;    
     const uint32_t currentItem;
     const uint32_t totalItem;    
-};
+}command_t;
 
 
 //task globals

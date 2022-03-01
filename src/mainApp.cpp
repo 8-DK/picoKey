@@ -16,6 +16,7 @@
 #include "usbHelper.h"
 #include "keyHelper.h"
 #include "cJSON.h"
+#include "commandParser.h"
 
 MainApp *MainApp::instance = nullptr;
 uint8_t MainApp::mUnlockSeq[MAX_COUNT_UNLOCK_SEQ] = {0};
@@ -115,6 +116,17 @@ void MainApp::readListFromEeprom()
     mPrintf("\n");
 }
 
+bool MainApp::readSingleEntryFromEeprom(int mintdex,char *dataBuffer)
+{    
+    int mListCount = 0;    
+    uint8_t* ptr;    
+    mListCount = startAddress[0];
+    if((mListCount > 35) || (mListCount == 0 ))
+        return false;    
+    memcpy(dataBuffer,startAddress+MAX_COUNT_UNLOCK_SEQ+(mintdex*100),100);
+    return true;            
+}
+
 void MainApp::vCdcDataTimeoutCallback( TimerHandle_t xTimer )
 {
     isCommandRcv = true;
@@ -174,8 +186,9 @@ void MainApp::mainApp( void * pvParameters )
                     cJSON *dataJsn = cJSON_GetObjectItemCaseSensitive(root, "data");
                     cJSON *currentItemJsn = cJSON_GetObjectItemCaseSensitive(root, "currentItem");
                     cJSON *totalItemJsn = cJSON_GetObjectItemCaseSensitive(root, "totalItem");
-
+                    
                     mPrintf("command : %s, currentItem : %d, totalItem : %d, data : %s,\n",commandJsn->valuestring,currentItemJsn->valueint,totalItemJsn->valueint,dataJsn->valuestring);
+                    cmdParsr.parse((COMMAND_CH)commandJsn->valuestring[0],dataJsn->valuestring,(uint32_t)currentItemJsn->valueint,(uint32_t)totalItemJsn->valueint);
                     delay(10);
                 }
                 memset(jsonBuffer,0,sizeof(jsonBuffer));
@@ -368,6 +381,9 @@ void MainApp::mainApp( void * pvParameters )
                         } 
                         else if(mKey == P4) //back
                         {
+                            readListFromEeprom();    
+                            DisplayHelper::resetListInd();                    
+                            DisplayHelper::displaySetState(EM_DISP_LIST);
                             mainAppState = EM_MAINAPP_UNLOCKED;
                         }
                     }
@@ -384,7 +400,9 @@ void MainApp::mainApp( void * pvParameters )
                     case EM_MAINAPP_SEND_PASS:
                             if(mKey == P3) //ok key
                             {
-                                DisplayHelper::displaySetState(EM_DISP_LIST);
+                                readListFromEeprom();    
+                                DisplayHelper::resetListInd();                    
+                                DisplayHelper::displaySetState(EM_DISP_LIST);                                    
                                 mainAppState = EM_MAINAPP_UNLOCKED;
                             }
                     break;                     

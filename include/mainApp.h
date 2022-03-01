@@ -52,6 +52,7 @@ public:
     static void eraseEeprom();
     static void storeListInEeprom();
     static void readListFromEeprom();
+    static bool readSingleEntryFromEeprom(int mintdex,char *dataBuffer);
     static void vCdcDataTimeoutCallback( TimerHandle_t xTimer );
     static void mainAppLoop();
     static void mainApp( void * pvParameters );
