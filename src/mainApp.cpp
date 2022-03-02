@@ -123,7 +123,7 @@ bool MainApp::readSingleEntryFromEeprom(int mintdex,char *dataBuffer)
     mListCount = startAddress[0];
     if((mListCount > 35) || (mListCount == 0 ))
         return false;    
-    memcpy(dataBuffer,startAddress+MAX_COUNT_UNLOCK_SEQ+(mintdex*100),100);
+    memcpy((void*)dataBuffer,startAddress+MAX_COUNT_UNLOCK_SEQ+(mintdex*100),100);
     return true;            
 }
 
@@ -185,10 +185,11 @@ void MainApp::mainApp( void * pvParameters )
                     cJSON *commandJsn = cJSON_GetObjectItemCaseSensitive(root, "command");
                     cJSON *dataJsn = cJSON_GetObjectItemCaseSensitive(root, "data");
                     cJSON *currentItemJsn = cJSON_GetObjectItemCaseSensitive(root, "currentItem");
-                    cJSON *totalItemJsn = cJSON_GetObjectItemCaseSensitive(root, "totalItem");
-                    
-                    mPrintf("command : %s, currentItem : %d, totalItem : %d, data : %s,\n",commandJsn->valuestring,currentItemJsn->valueint,totalItemJsn->valueint,dataJsn->valuestring);
-                    cmdParsr.parse((COMMAND_CH)commandJsn->valuestring[0],dataJsn->valuestring,(uint32_t)currentItemJsn->valueint,(uint32_t)totalItemJsn->valueint);
+                    cJSON *totalItemJsn = cJSON_GetObjectItemCaseSensitive(root, "totalItem");                    
+                    mPrintf("command : %s, currentItem : %d, totalItem : %d, data : %s,\r\n",commandJsn->valuestring,currentItemJsn->valueint,totalItemJsn->valueint,dataJsn->valuestring);
+                    char respBuffer[200];
+                    cmdParsr.parse((COMMAND_CH)commandJsn->valuestring[0],dataJsn->valuestring,(uint32_t)currentItemJsn->valueint,(uint32_t)totalItemJsn->valueint,&respBuffer);
+                    USBHelper::sendToVcom(1,( uint8_t *)respBuffer,100);
                     delay(10);
                 }
                 memset(jsonBuffer,0,sizeof(jsonBuffer));

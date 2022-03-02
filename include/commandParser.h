@@ -5,7 +5,7 @@
 class CommandParserHelper{
 public:
     CommandParserHelper();
-    static bool parse(COMMAND_CH command,const char *data ,const uint32_t currentItem, const uint32_t totalItem);
+    static bool parse(COMMAND_CH command,const char *data ,const uint32_t currentItem, const uint32_t totalItem,char *respBuffer);
     static bool isValidCommand(COMMAND_CH command);
 };
 

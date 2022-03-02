@@ -1,21 +1,35 @@
 #include "commandParser.h"
-
+#include "usbHelper.h"
+#include "mainApp.h"
+#include "cJSON.h"
 
 CommandParserHelper::CommandParserHelper()
 {
 
 }
 
-bool CommandParserHelper::parse(COMMAND_CH cmdCh,const char *data ,const uint32_t currentItem, const uint32_t totalItem)
+bool CommandParserHelper::parse(COMMAND_CH cmdCh,const char *data ,const uint32_t currentItem, const uint32_t totalItem, char *respBuffer )
 {
     if(!isValidCommand(cmdCh))
         return false;
 
+   char *out;
+   cJSON *root, *jcommand, *jdata, *jcurrentItem,*jtotalItem;
+
+   /* create root node and array */
+   root = cJSON_CreateObject();
+   cars = cJSON_CreateArray();
     switch (cmdCh)
     {
         case EM_GET_DATA_LIST:
         //create list json send one by one
-        
+         cJSON_AddItemToObject(root, "command",jcommand);
+         cJSON_AddItemToObject(root, "data",jdata);
+         cJSON_AddItemToObject(root, "currentItem",jtotalItem);
+         cJSON_AddItemToObject(root, "totalItem",jtotalItem);
+        MainApp::readSingleEntryFromEeprom(currentItem,respBuffer);
+
+        mPrintf("Command Received A\n");
         break;
 
         EM_SET_DATA_LIST:

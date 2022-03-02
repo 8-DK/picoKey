@@ -14,7 +14,7 @@
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
 <script>
     var port, textEncoder, writableStreamClosed, writer;
-
+	var cmdGetList = "{\"command\": \"A\",\"data\" : \"\",\"currentItem\" : 0,\"totalItem\" : 0}"
     async function connectSerial() {
         try {
             // Prompt user to select any serial port.
@@ -26,6 +26,7 @@
             writableStreamClosed = textEncoder.readable.pipeTo(port.writable);
 
             writer = textEncoder.writable.getWriter();
+			sendCommand(cmdGetList)
         } catch {
             alert("Serial Connection Failed");
         }
@@ -40,6 +41,13 @@
         if (document.getElementById("addLine").checked == true) dataToSend = dataToSend + "\r\n";
         if (document.getElementById("echoOn").checked == true) appendToTerminal("> " + dataToSend);
         await writer.write(dataToSend);
+        document.getElementById("lineToSend").value = "";
+        //await writer.releaseLock();
+    }
+	
+	async function sendCommand(cmd) {               
+        if (document.getElementById("echoOn").checked == true) appendToTerminal("> " + cmd);
+        await writer.write(cmd);
         document.getElementById("lineToSend").value = "";
         //await writer.releaseLock();
     }
