@@ -187,8 +187,8 @@ void MainApp::mainApp( void * pvParameters )
                     cJSON *currentItemJsn = cJSON_GetObjectItemCaseSensitive(root, "currentItem");
                     cJSON *totalItemJsn = cJSON_GetObjectItemCaseSensitive(root, "totalItem");                    
                     mPrintf("command : %s, currentItem : %d, totalItem : %d, data : %s,\r\n",commandJsn->valuestring,currentItemJsn->valueint,totalItemJsn->valueint,dataJsn->valuestring);
-                    char respBuffer[200];
-                    cmdParsr.parse((COMMAND_CH)commandJsn->valuestring[0],dataJsn->valuestring,(uint32_t)currentItemJsn->valueint,(uint32_t)totalItemJsn->valueint,&respBuffer);
+                    char respBuffer[200] = {0};
+                    cmdParsr.parse((COMMAND_CH)commandJsn->valuestring[0],dataJsn->valuestring,(uint32_t)currentItemJsn->valueint,(uint32_t)totalItemJsn->valueint,(char*)&respBuffer);
                     USBHelper::sendToVcom(1,( uint8_t *)respBuffer,100);
                     delay(10);
                 }

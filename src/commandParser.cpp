@@ -14,22 +14,27 @@ bool CommandParserHelper::parse(COMMAND_CH cmdCh,const char *data ,const uint32_
         return false;
 
    char *out;
-   cJSON *root, *jcommand, *jdata, *jcurrentItem,*jtotalItem;
+   cJSON *root, *jcommand, *jdata;
 
    /* create root node and array */
    root = cJSON_CreateObject();
-   cars = cJSON_CreateArray();
     switch (cmdCh)
     {
         case EM_GET_DATA_LIST:
-        //create list json send one by one
-         cJSON_AddItemToObject(root, "command",jcommand);
-         cJSON_AddItemToObject(root, "data",jdata);
-         cJSON_AddItemToObject(root, "currentItem",jtotalItem);
-         cJSON_AddItemToObject(root, "totalItem",jtotalItem);
-        MainApp::readSingleEntryFromEeprom(currentItem,respBuffer);
-
-        mPrintf("Command Received A\n");
+        {
+            //create list json send one by one
+            char cmd[2] = {cmdCh,0};
+            MainApp::readSingleEntryFromEeprom(currentItem,respBuffer);
+            cJSON_AddStringToObject(root, "command",cmd);
+            cJSON_AddStringToObject(root, "data",respBuffer);
+            cJSON_AddNumberToObject(root, "currentItem",(int)currentItem);
+            cJSON_AddNumberToObject(root, "totalItem",(int)totalItem);        
+            char *out = cJSON_Print(root);
+            mPrintf("%s\n", out);
+            strcpy(respBuffer,out);
+            free(out);  
+            mPrintf("Command Received A\n");
+        }
         break;
 
         EM_SET_DATA_LIST:

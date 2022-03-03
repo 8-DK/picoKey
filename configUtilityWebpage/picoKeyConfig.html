@@ -474,7 +474,9 @@ async function sendCommand(cmd) {
 
 async function readUntilClosed() {
   while (port.readable && keepReading) {
-    reader = port.readable.getReader();
+	const textDecoder = new TextDecoderStream();
+	const readableStreamClosed = port.readable.pipeTo(textDecoder.writable);
+	reader = textDecoder.readable.getReader();
     try {
       while (true) {
         const { value, done } = await reader.read();
