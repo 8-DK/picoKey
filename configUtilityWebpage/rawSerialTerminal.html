@@ -28,6 +28,10 @@
         background-color: rgb(88, 92, 92);
         padding: 10px;
         margin: 0px;
+		font-size: 0.7em;
+		background: white;
+		color: black;
+		border-color: lightblue;
     }
 </style>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -36,6 +40,12 @@
  A serial terminal that runs with out any plugins in chrome.">
 
 <button onclick="connectSerial()">Connect</button>
+Comport:
+<input type="text" id="baud" list="baudList" style="width: 10ch;" onclick="this.value = ''"
+    onchange="localStorage.baud = this.value">
+<datalist id="baudList">
+    <option value="110">110</option>
+</datalist>
 Baud:
 <input type="text" id="baud" list="baudList" style="width: 10ch;" onclick="this.value = ''"
     onchange="localStorage.baud = this.value">
