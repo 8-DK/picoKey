@@ -251,8 +251,10 @@ table.table td .add {
 </head>
 <body style="font-family:Verdana;color:#aaaaaa;">
 <div style="background-color:#e5e5e5;padding:15px;text-align:center;"> 
+
 Comport:
-<select class="button-15" type="text" id="comport" style="width: 10ch;" onchange="localStorage.comport = this.value" value="">
+<select class="button-15" type="text" id="comport" style="width: 10ch;"  onchange="localStorage.comport = this.value" value=""></select>
+<button class="button-15" onclick="getSerialPermission()" > &#8634;</button>
 Baud:
 <input  class="button-15" type="text" id="baud" list="baudList" style="width: 10ch;" onclick="this.value = ''" onchange="localStorage.baud = this.value" value="9600">
 <datalist id="baudList">
@@ -355,7 +357,7 @@ Baud:
 	</div>
 	<div class="column right" style="width:30%">  
 		<h4>Logs</h4>
-		<div id="serialResults">	
+		<div id="serialResults">
 		</div>
 	</div>
 </div>
@@ -372,15 +374,18 @@ let readyToClose = false;
 let closed;
 let portsListInf;
 
+const serialResultsDiv = document.getElementById("serialResults");
+
 const filters = [{
     usbVendorId: 0xCAFE,
     usbProductId: 0x4016
 }, ];
 
 // Check to see what ports are available when the page loads.
-document.addEventListener('DOMContentLoaded', async () => {
+document.addEventListener('DOMContentLoaded', async () => {  
   portsListInf = await serialObj.getPorts();
   console.log("addEventListener DOMContentLoaded : ",portsListInf);
+  document.getElementById("comport").innerHTML = "";
   for (let i = 0; i < portsListInf.length; i++) 
   {
 	const { usbProductId, usbVendorId } = portsListInf[i].getInfo();
@@ -391,6 +396,21 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Populate the UI with options for the user to select or
   // automatically connect to devices.
 });
+
+async function getSerialPermission()
+{
+  await serialObj.requestPort({filters});
+  portsListInf = await serialObj.getPorts();
+  console.log("addEventListener DOMContentLoaded : ",portsListInf);
+  document.getElementById("comport").innerHTML = "";
+  for (let i = 0; i < portsListInf.length; i++) 
+  {
+	const { usbProductId, usbVendorId } = portsListInf[i].getInfo();
+	console.log(i,">>",usbProductId," : ", usbVendorId,portsListInf[i].getInfo());
+	comNameStr = i+"_"+usbProductId+"_"+ usbVendorId;
+	addPortToList(i,comNameStr);
+  }
+}
 
 serialObj.addEventListener('connect', e => {
   // Add |e.target| to the UI or automatically connect.
@@ -411,13 +431,14 @@ async function addPortToList(portID,portName) {
 	var select = document.getElementById("comport");
 	select.appendChild(option);  
 }
+
 async function connectSerial() {
     try {
         if (!port) {
-		console.log("Current com : " , localStorage.comport);
+			console.log("Current com : " , localStorage.comport);
+			serialResultsDiv.innerHTML = ""
 			keepReading = true            
-            // Prompt user to select any serial port.
-            //port = await serialObj.requestPort({filters});
+            // Prompt user to select any serial port.            
 			port = portsListInf[localStorage.comport];
             await port.open({
                 baudRate: document.getElementById("baud").value
@@ -429,7 +450,7 @@ async function connectSerial() {
             sendCommand(cmdGetList);
             document.getElementById("connectBtn").innerHTML = "Disconnect"
 			document.getElementById("comport").disabled = true;
-			document.getElementById("baud").disabled = true;
+			document.getElementById("baud").disabled = true;			
         } else {
             closePort();
         }
@@ -457,7 +478,7 @@ async function sendCharacterNumber() {
 async function sendSerialLine() {
     dataToSend = document.getElementById("lineToSend").value;
     if (document.getElementById("addLine").checked == true) dataToSend = dataToSend + "\r\n";
-    if (document.getElementById("echoOn").checked == true) appendToTerminal("> " + dataToSend);
+    if (document.getElementById("echoOn").checked == true) appendToTerminal("\n>> " + dataToSend+"\n");
 	writer = textEncoder.writable.getWriter();
     writer.write(dataToSend);
     document.getElementById("lineToSend").value = "";
@@ -465,7 +486,7 @@ async function sendSerialLine() {
 }
 
 async function sendCommand(cmd) {
-    if (document.getElementById("echoOn").checked == true) appendToTerminal("> " + cmd);
+    if (document.getElementById("echoOn").checked == true) appendToTerminal("\n>> " + cmd+"\n");
 	writer = textEncoder.writable.getWriter();
     writer.write(cmd);
     document.getElementById("lineToSend").value = "";
@@ -499,8 +520,6 @@ async function readUntilClosed() {
     await port.close();
 	port = undefined
 }
-
-const serialResultsDiv = document.getElementById("serialResults");
 
 async function appendToTerminal(newStuff) {
     serialResultsDiv.innerHTML += newStuff;

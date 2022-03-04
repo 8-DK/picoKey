@@ -24,12 +24,12 @@ bool CommandParserHelper::parse(COMMAND_CH cmdCh,const char *data ,const uint32_
         {
             //create list json send one by one
             char cmd[2] = {cmdCh,0};
-            MainApp::readSingleEntryFromEeprom(currentItem,respBuffer);
+            MainApp::readSingleEntryFromEeprom((int)currentItem,respBuffer);
             cJSON_AddStringToObject(root, "command",cmd);
             cJSON_AddStringToObject(root, "data",respBuffer);
-            cJSON_AddNumberToObject(root, "currentItem",(int)currentItem);
-            cJSON_AddNumberToObject(root, "totalItem",(int)totalItem);        
-            char *out = cJSON_Print(root);
+            cJSON_AddIntegerToObject(root, "currentItem",(int)currentItem);
+            cJSON_AddIntegerToObject(root, "totalItem",(int)totalItem);        
+            char *out = cJSON_PrintUnformatted(root);
             mPrintf("%s\n", out);
             strcpy(respBuffer,out);
             free(out);  

@@ -621,6 +621,17 @@ static cJSON_bool compare_json(cJSON *a, cJSON *b, const cJSON_bool case_sensiti
                 return true;
             }
 
+        case cJSON_Integer:
+            /* numeric mismatch. */
+            if ((a->valueint != b->valueint) || (!compare_double(a->valuedouble, b->valuedouble)))
+            {
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+
         case cJSON_String:
             /* string mismatch. */
             if (strcmp(a->valuestring, b->valuestring) != 0)
@@ -1154,6 +1165,13 @@ static void create_patches(cJSON * const patches, const unsigned char * const pa
     switch (from->type & 0xFF)
     {
         case cJSON_Number:
+            if ((from->valueint != to->valueint) || !compare_double(from->valuedouble, to->valuedouble))
+            {
+                compose_patch(patches, (const unsigned char*)"replace", path, NULL, to);
+            }
+            return;
+        
+        case cJSON_Integer:
             if ((from->valueint != to->valueint) || !compare_double(from->valuedouble, to->valuedouble))
             {
                 compose_patch(patches, (const unsigned char*)"replace", path, NULL, to);

@@ -70,8 +70,8 @@ void MainApp::storeListInEeprom()
     for(int i = 0 ; i < mListCount ; i++)
     {
         char listData[100] = {0};    
-        sprintf(listData,"%d,Password",i);
-        mPrintf("%s",listData);
+        sprintf(listData,"User%d,Pass%d",i,i);
+        mPrintf("%s\r\n",listData);
         memcpy(buffer+j+(i*100),listData,100);
         delay(100);
     }
@@ -123,7 +123,7 @@ bool MainApp::readSingleEntryFromEeprom(int mintdex,char *dataBuffer)
     mListCount = startAddress[0];
     if((mListCount > 35) || (mListCount == 0 ))
         return false;    
-    memcpy((void*)dataBuffer,startAddress+MAX_COUNT_UNLOCK_SEQ+(mintdex*100),100);
+    memcpy(dataBuffer,startAddress+1+MAX_COUNT_UNLOCK_SEQ+(mintdex*100),100); //list count 1 + 6 unlock seq + user1 data+user2 data
     return true;            
 }
 
@@ -139,7 +139,7 @@ void MainApp::mainApp( void * pvParameters )
     
     delay(1000);
     readListFromEeprom();
-    // storeListInEeprom();
+    storeListInEeprom();
     xTimerCdcDataTimeout = xTimerCreate
                    ("cdcDataTmout",
                      toMs(500),
