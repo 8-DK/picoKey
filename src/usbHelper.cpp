@@ -210,7 +210,8 @@ void USBHelper::sendKeyStroke(uint8_t keyCode, uint8_t modifier)
   memset(keyboardData.keycode,0x41,6);
   keyboardData.keycode[0] = keyCode;
   keyboardData.modifier = modifier;
-  sendKeyBoardData = 1;
+//  sendKeyBoardData = 1;
+  tud_hid_keyboard_report(REPORT_ID_KEYBOARD, keyboardData.modifier, keyboardData.keycode);
 }
 
 // send key strokes with modifier

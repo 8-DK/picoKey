@@ -1,17 +1,17 @@
 name: Kernel-Checker
 
-on: [pull_request]
+on: [push, pull_request]
 
 jobs:
   kernel-checker:
     name: FreeRTOS Kernel Header Checks
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       # Install python 3
       - name: Tool Setup
         uses: actions/setup-python@v2
         with:
-          python-version: 3.8.5
+          python-version: 3.7.10
           architecture:   x64
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -21,14 +21,13 @@ jobs:
         uses: actions/checkout@v2
         with:
           repository: FreeRTOS/FreeRTOS
-          ref:  master
+          ref:  main
           path: tools
 
       # Checkout user pull request changes
       - name: Checkout Pull Request
         uses: actions/checkout@v2
         with:
-          ref:  ${{ github.event.pull_request.head.sha }}
           path: inspect
 
       # Collect all affected files

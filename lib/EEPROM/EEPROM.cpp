@@ -8,7 +8,7 @@
 // the standard libraries in the hope it will still catch some user cases where they
 // use these libraries.
 // See https://github.com/earlephilhower/arduino-pico/issues/167#issuecomment-848622174
-#include <Adafruit_TinyUSB.h>
+//#include <Adafruit_TinyUSB.h>
 #endif
 
 // extern "C" uint8_t _EEPROM_start;

@@ -1,6 +1,8 @@
 /*
- * FreeRTOS Kernel V10.4.3
- * Copyright (C) 2020 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
+ * FreeRTOS Kernel <DEVELOPMENT BRANCH>
+ * Copyright (C) 2021 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
+ *
+ * SPDX-License-Identifier: MIT
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -22,7 +24,6 @@
  * https://www.FreeRTOS.org
  * https://github.com/FreeRTOS
  *
- * 1 tab == 4 spaces!
  */
 
 
@@ -60,6 +61,8 @@
     #define portTIMSK                   TIMSK0
     #define portTIFR                    TIFR0
 
+#else
+    #error "No Timer defined for scheduler"
 #endif
 
 /*-----------------------------------------------------------*/
@@ -619,7 +622,7 @@ BaseType_t xPortStartScheduler( void )
 
 void vPortEndScheduler( void )
 {
-	/* It is unlikely that the ATmega port will get stopped. */
+    /* It is unlikely that the ATmega port will get stopped. */
 }
 /*-----------------------------------------------------------*/
 
@@ -761,5 +764,3 @@ uint8_t ucLowByte;
         xTaskIncrementTick();
     }
 #endif
-
-

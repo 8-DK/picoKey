@@ -1,6 +1,8 @@
 /*
- * FreeRTOS Kernel V10.4.3
- * Copyright (C) 2020 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
+ * FreeRTOS Kernel <DEVELOPMENT BRANCH>
+ * Copyright (C) 2021 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
+ *
+ * SPDX-License-Identifier: MIT
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -22,16 +24,17 @@
  * https://www.FreeRTOS.org
  * https://github.com/FreeRTOS
  *
- * 1 tab == 4 spaces!
  */
 
 
 #ifndef PORTMACRO_H
-    #define PORTMACRO_H
+#define PORTMACRO_H
 
-    #ifdef __cplusplus
-        extern "C" {
-    #endif
+/* *INDENT-OFF* */
+#ifdef __cplusplus
+    extern "C" {
+#endif
+/* *INDENT-ON* */
 
 /*-----------------------------------------------------------
  * Port specific definitions.
@@ -56,16 +59,18 @@
     typedef long             BaseType_t;
     typedef unsigned long    UBaseType_t;
 
-    #if ( configUSE_16_BIT_TICKS == 1 )
+    #if ( configTICK_TYPE_WIDTH_IN_BITS == TICK_TYPE_WIDTH_16_BITS )
         typedef uint16_t     TickType_t;
         #define portMAX_DELAY              ( TickType_t ) 0xffff
-    #else
+    #elif ( configTICK_TYPE_WIDTH_IN_BITS == TICK_TYPE_WIDTH_32_BITS )
         typedef uint32_t     TickType_t;
         #define portMAX_DELAY              ( TickType_t ) 0xffffffffUL
 
 /* 32-bit tick type on a 32-bit architecture, so reads of the tick count do
  * not need to be guarded with a critical section. */
         #define portTICK_TYPE_IS_ATOMIC    1
+    #else
+        #error configTICK_TYPE_WIDTH_IN_BITS set to unsupported tick type width.
     #endif
 /*-----------------------------------------------------------*/
 
@@ -81,15 +86,15 @@
     #define portMPU_REGION_CACHEABLE_BUFFERABLE                      ( 0x07UL << 16UL )
     #define portMPU_REGION_EXECUTE_NEVER                             ( 0x01UL << 28UL )
 
-    #define portUNPRIVILEGED_FLASH_REGION                            ( 0UL )
-    #define portPRIVILEGED_FLASH_REGION                              ( 1UL )
-    #define portPRIVILEGED_RAM_REGION                                ( 2UL )
     #define portGENERAL_PERIPHERALS_REGION                           ( 3UL )
     #define portSTACK_REGION                                         ( 4UL )
-    #define portFIRST_CONFIGURABLE_REGION                            ( 5UL )
-    #define portLAST_CONFIGURABLE_REGION                             ( 7UL )
+    #define portUNPRIVILEGED_FLASH_REGION                            ( 5UL )
+    #define portPRIVILEGED_FLASH_REGION                              ( 6UL )
+    #define portPRIVILEGED_RAM_REGION                                ( 7UL )
+    #define portFIRST_CONFIGURABLE_REGION                            ( 0UL )
+    #define portLAST_CONFIGURABLE_REGION                             ( 2UL )
     #define portNUM_CONFIGURABLE_REGIONS                             ( ( portLAST_CONFIGURABLE_REGION - portFIRST_CONFIGURABLE_REGION ) + 1 )
-    #define portTOTAL_NUM_REGIONS                                    ( portNUM_CONFIGURABLE_REGIONS + 1 ) /* Plus one to make space for the stack region. */
+    #define portTOTAL_NUM_REGIONS_IN_TCB                             ( portNUM_CONFIGURABLE_REGIONS + 1 ) /* Plus one to make space for the stack region. */
 
     #define portSWITCH_TO_USER_MODE()    __asm volatile ( " mrs r0, control \n orr r0, #1 \n msr control, r0 " ::: "r0", "memory" )
 
@@ -102,7 +107,7 @@
 /* Plus 1 to create space for the stack region. */
     typedef struct MPU_SETTINGS
     {
-        xMPU_REGION_REGISTERS xRegion[ portTOTAL_NUM_REGIONS ];
+        xMPU_REGION_REGISTERS xRegion[ portTOTAL_NUM_REGIONS_IN_TCB ];
     } xMPU_SETTINGS;
 
 /* Architecture specifics. */
@@ -110,6 +115,7 @@
     #define portTICK_PERIOD_MS    ( ( TickType_t ) 1000 / configTICK_RATE_HZ )
     #define portBYTE_ALIGNMENT    8
     #define portDONT_DISCARD      __attribute__( ( used ) )
+    #define portNORETURN         __attribute__( ( noreturn ) )
 /*-----------------------------------------------------------*/
 
 /* SVC numbers for various services. */
@@ -119,7 +125,7 @@
 
 /* Scheduler utilities. */
 
-    #define portYIELD()    __asm volatile ( "	SVC	%0	\n"::"i" ( portSVC_YIELD ) : "memory" )
+    #define portYIELD()    __asm volatile ( "   SVC %0  \n"::"i" ( portSVC_YIELD ) : "memory" )
     #define portYIELD_WITHIN_API()                      \
     {                                                   \
         /* Set a PendSV to request a context switch. */ \
@@ -133,7 +139,7 @@
 
     #define portNVIC_INT_CTRL_REG     ( *( ( volatile uint32_t * ) 0xe000ed04 ) )
     #define portNVIC_PENDSVSET_BIT    ( 1UL << 28UL )
-    #define portEND_SWITCHING_ISR( xSwitchRequired )    if( xSwitchRequired ) portNVIC_INT_CTRL_REG = portNVIC_PENDSVSET_BIT
+    #define portEND_SWITCHING_ISR( xSwitchRequired )    do { if( xSwitchRequired ) portNVIC_INT_CTRL_REG = portNVIC_PENDSVSET_BIT; } while( 0 )
     #define portYIELD_FROM_ISR( x )                     portEND_SWITCHING_ISR( x )
 /*-----------------------------------------------------------*/
 
@@ -255,10 +261,10 @@
 
         __asm volatile
         (
-            "	mov %0, %1												\n"\
-            "	msr basepri, %0											\n"\
-            "	isb														\n"\
-            "	dsb														\n"\
+            "   mov %0, %1                                              \n"\
+            "   msr basepri, %0                                         \n"\
+            "   isb                                                     \n"\
+            "   dsb                                                     \n"\
             : "=r" ( ulNewBASEPRI ) : "i" ( configMAX_SYSCALL_INTERRUPT_PRIORITY ) : "memory"
         );
     }
@@ -271,11 +277,11 @@
 
         __asm volatile
         (
-            "	mrs %0, basepri											\n"\
-            "	mov %1, %2												\n"\
-            "	msr basepri, %1											\n"\
-            "	isb														\n"\
-            "	dsb														\n"\
+            "   mrs %0, basepri                                         \n"\
+            "   mov %1, %2                                              \n"\
+            "   msr basepri, %1                                         \n"\
+            "   isb                                                     \n"\
+            "   dsb                                                     \n"\
             : "=r" ( ulOriginalBASEPRI ), "=r" ( ulNewBASEPRI ) : "i" ( configMAX_SYSCALL_INTERRUPT_PRIORITY ) : "memory"
         );
 
@@ -289,7 +295,7 @@
     {
         __asm volatile
         (
-            "	msr basepri, %0	"::"r" ( ulNewMaskValue ) : "memory"
+            "   msr basepri, %0 "::"r" ( ulNewMaskValue ) : "memory"
         );
     }
 /*-----------------------------------------------------------*/
@@ -297,12 +303,15 @@
     #define portMEMORY_BARRIER()    __asm volatile ( "" ::: "memory" )
 
     #ifndef configENFORCE_SYSTEM_CALLS_FROM_KERNEL_ONLY
-        #warning "configENFORCE_SYSTEM_CALLS_FROM_KERNEL_ONLY is not defined. We recommend defining it to 1 in FreeRTOSConfig.h for better security. https://www.FreeRTOS.org/FreeRTOS-V10.3.x.html"
+        #warning "configENFORCE_SYSTEM_CALLS_FROM_KERNEL_ONLY is not defined. We recommend defining it to 1 in FreeRTOSConfig.h for better security. *www.FreeRTOS.org/FreeRTOS-V10.3.x.html"
         #define configENFORCE_SYSTEM_CALLS_FROM_KERNEL_ONLY    0
     #endif
 /*-----------------------------------------------------------*/
-    #ifdef __cplusplus
-        }
-    #endif
+
+/* *INDENT-OFF* */
+#ifdef __cplusplus
+    }
+#endif
+/* *INDENT-ON* */
 
 #endif /* PORTMACRO_H */

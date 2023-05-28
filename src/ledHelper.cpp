@@ -10,7 +10,7 @@
  * Copyright 2021 - 2022 https://github.com/8-DK
  */
 #include "ledHelper.h"
-
+#include "NeoPixelConnect.h"
 LedHelper *LedHelper::instance = 0;
 int LedHelper::pinNums[TOTAL_LED_COUNT] = {LED_1_PIN,LED_2_PIN,LED_3_PIN};
 pico_cpp::GPIO_Pin *LedHelper::m_leds[TOTAL_LED_COUNT];
@@ -34,6 +34,24 @@ void LedHelper::initLed()
 
 void LedHelper::ledTask( void * pvParameters )
 {
+    NeoPixelConnect p(16, 1, pio0, 0);
+    while(1)
+    {
+        p.neoPixelFill(255, 0, 0, true);
+        delay(1000);
+        p.neoPixelClear(true);
+        delay(1000);
+
+        p.neoPixelFill(0, 255, 0, true);
+        delay(1000);
+        p.neoPixelClear(true);
+        delay(1000);
+
+        p.neoPixelFill(0, 0, 255, true);
+        delay(1000);
+        p.neoPixelClear(true);
+        delay(1000);
+    }
     initLed();
     while(1)
     {

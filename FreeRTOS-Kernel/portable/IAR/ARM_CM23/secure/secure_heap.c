@@ -1,6 +1,8 @@
 /*
- * FreeRTOS Kernel V10.4.3
- * Copyright (C) 2020 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
+ * FreeRTOS Kernel <DEVELOPMENT BRANCH>
+ * Copyright (C) 2021 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
+ *
+ * SPDX-License-Identifier: MIT
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -22,7 +24,6 @@
  * https://www.FreeRTOS.org
  * https://github.com/FreeRTOS
  *
- * 1 tab == 4 spaces!
  */
 
 /* Standard includes. */
@@ -37,7 +38,9 @@
 /**
  * @brief Total heap size.
  */
-#define secureconfigTOTAL_HEAP_SIZE    ( ( ( size_t ) ( 10 * 1024 ) ) )
+#ifndef secureconfigTOTAL_HEAP_SIZE
+    #define secureconfigTOTAL_HEAP_SIZE    ( ( ( size_t ) ( 10 * 1024 ) ) )
+#endif
 
 /* No test marker by default. */
 #ifndef mtCOVERAGE_TEST_MARKER
@@ -110,7 +113,8 @@ static const size_t xHeapStructSize = ( sizeof( BlockLink_t ) + ( ( size_t ) ( s
 /**
  * @brief Create a couple of list links to mark the start and end of the list.
  */
-static BlockLink_t xStart, * pxEnd = NULL;
+static BlockLink_t xStart;
+static BlockLink_t * pxEnd = NULL;
 
 /**
  * @brief Keeps track of the number of free bytes remaining, but says nothing
@@ -242,7 +246,9 @@ static void prvInsertBlockIntoFreeList( BlockLink_t * pxBlockToInsert )
 
 void * pvPortMalloc( size_t xWantedSize )
 {
-    BlockLink_t * pxBlock, * pxPreviousBlock, * pxNewBlockLink;
+    BlockLink_t * pxBlock;
+    BlockLink_t * pxPreviousBlock;
+    BlockLink_t * pxNewBlockLink;
     void * pvReturn = NULL;
 
     /* If this is the first call to malloc then the heap will require
@@ -444,11 +450,5 @@ size_t xPortGetFreeHeapSize( void )
 size_t xPortGetMinimumEverFreeHeapSize( void )
 {
     return xMinimumEverFreeBytesRemaining;
-}
-/*-----------------------------------------------------------*/
-
-void vPortInitialiseBlocks( void )
-{
-    /* This just exists to keep the linker quiet. */
 }
 /*-----------------------------------------------------------*/

@@ -16,6 +16,7 @@
 #include "usbHelper.h"
 #include "keyHelper.h"
 #include "cJSON.h"
+#include "Storage.h"
 
 MainApp *MainApp::instance = nullptr;
 uint8_t MainApp::mUnlockSeq[MAX_COUNT_UNLOCK_SEQ] = {0};
@@ -123,9 +124,13 @@ void MainApp::vCdcDataTimeoutCallback( TimerHandle_t xTimer )
 
 void MainApp::mainApp( void * pvParameters )
 {    
+    delay(10000);
+    mPrintf("Main Task Started\n");
+    Storage storage;
+    storage.W25qxx_Init();
+
     char jsonBuffer[200] = {0}; 
     
-    delay(1000);
     readListFromEeprom();
     // storeListInEeprom();
     xTimerCdcDataTimeout = xTimerCreate

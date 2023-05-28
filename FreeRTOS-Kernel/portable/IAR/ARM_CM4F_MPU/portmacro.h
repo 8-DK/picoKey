@@ -1,6 +1,8 @@
 /*
- * FreeRTOS Kernel V10.4.3
- * Copyright (C) 2020 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
+ * FreeRTOS Kernel <DEVELOPMENT BRANCH>
+ * Copyright (C) 2021 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
+ *
+ * SPDX-License-Identifier: MIT
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -60,17 +62,20 @@ typedef portSTACK_TYPE   StackType_t;
 typedef long             BaseType_t;
 typedef unsigned long    UBaseType_t;
 
-#if ( configUSE_16_BIT_TICKS == 1 )
+#if ( configTICK_TYPE_WIDTH_IN_BITS == TICK_TYPE_WIDTH_16_BITS )
     typedef uint16_t     TickType_t;
     #define portMAX_DELAY              ( TickType_t ) 0xffff
-#else
+#elif ( configTICK_TYPE_WIDTH_IN_BITS  == TICK_TYPE_WIDTH_32_BITS )
     typedef uint32_t     TickType_t;
     #define portMAX_DELAY              ( TickType_t ) 0xffffffffUL
 
 /* 32-bit tick type on a 32-bit architecture, so reads of the tick count do
  * not need to be guarded with a critical section. */
     #define portTICK_TYPE_IS_ATOMIC    1
+#else
+    #error configTICK_TYPE_WIDTH_IN_BITS set to unsupported tick type width.
 #endif
+
 /*-----------------------------------------------------------*/
 
 /* MPU specific constants. */
@@ -172,15 +177,15 @@ typedef unsigned long    UBaseType_t;
     #define configTEX_S_C_B_SRAM          ( 0x07UL )
 #endif
 
-#define portUNPRIVILEGED_FLASH_REGION     ( 0UL )
-#define portPRIVILEGED_FLASH_REGION       ( 1UL )
-#define portPRIVILEGED_RAM_REGION         ( 2UL )
-#define portGENERAL_PERIPHERALS_REGION    ( 3UL )
-#define portSTACK_REGION                  ( 4UL )
-#define portFIRST_CONFIGURABLE_REGION     ( 5UL )
-#define portTOTAL_NUM_REGIONS             ( configTOTAL_MPU_REGIONS )
-#define portNUM_CONFIGURABLE_REGIONS      ( portTOTAL_NUM_REGIONS - portFIRST_CONFIGURABLE_REGION )
-#define portLAST_CONFIGURABLE_REGION      ( portTOTAL_NUM_REGIONS - 1UL )
+#define portGENERAL_PERIPHERALS_REGION    ( configTOTAL_MPU_REGIONS - 5UL )
+#define portSTACK_REGION                  ( configTOTAL_MPU_REGIONS - 4UL )
+#define portUNPRIVILEGED_FLASH_REGION     ( configTOTAL_MPU_REGIONS - 3UL )
+#define portPRIVILEGED_FLASH_REGION       ( configTOTAL_MPU_REGIONS - 2UL )
+#define portPRIVILEGED_RAM_REGION         ( configTOTAL_MPU_REGIONS - 1UL )
+#define portFIRST_CONFIGURABLE_REGION     ( 0UL )
+#define portLAST_CONFIGURABLE_REGION      ( configTOTAL_MPU_REGIONS - 6UL )
+#define portNUM_CONFIGURABLE_REGIONS      ( configTOTAL_MPU_REGIONS - 5UL )
+#define portTOTAL_NUM_REGIONS_IN_TCB      ( portNUM_CONFIGURABLE_REGIONS + 1 ) /* Plus 1 to create space for the stack region. */
 
 #define portSWITCH_TO_USER_MODE()    __asm volatile ( " mrs r0, control \n orr r0, r0, #1 \n msr control, r0 " ::: "r0", "memory" )
 
@@ -190,10 +195,9 @@ typedef struct MPU_REGION_REGISTERS
     uint32_t ulRegionAttribute;
 } xMPU_REGION_REGISTERS;
 
-/* Plus 1 to create space for the stack region. */
 typedef struct MPU_SETTINGS
 {
-    xMPU_REGION_REGISTERS xRegion[ portTOTAL_NUM_REGIONS ];
+    xMPU_REGION_REGISTERS xRegion[ portTOTAL_NUM_REGIONS_IN_TCB ];
 } xMPU_SETTINGS;
 
 /* Architecture specifics. */
@@ -209,7 +213,7 @@ typedef struct MPU_SETTINGS
 
 /* Scheduler utilities. */
 
-#define portYIELD()    __asm volatile ( "	SVC	%0	\n"::"i" ( portSVC_YIELD ) : "memory" )
+#define portYIELD()    __asm volatile ( "   SVC %0  \n"::"i" ( portSVC_YIELD ) : "memory" )
 #define portYIELD_WITHIN_API()                          \
     {                                                   \
         /* Set a PendSV to request a context switch. */ \
@@ -220,7 +224,7 @@ typedef struct MPU_SETTINGS
 
 #define portNVIC_INT_CTRL_REG     ( *( ( volatile uint32_t * ) 0xe000ed04 ) )
 #define portNVIC_PENDSVSET_BIT    ( 1UL << 28UL )
-#define portEND_SWITCHING_ISR( xSwitchRequired )    if( xSwitchRequired != pdFALSE ) portYIELD_WITHIN_API()
+#define portEND_SWITCHING_ISR( xSwitchRequired )    do { if( xSwitchRequired != pdFALSE ) portYIELD_WITHIN_API(); } while( 0 )
 #define portYIELD_FROM_ISR( x )                     portEND_SWITCHING_ISR( x )
 /*-----------------------------------------------------------*/
 
@@ -251,12 +255,23 @@ typedef struct MPU_SETTINGS
 extern void vPortEnterCritical( void );
 extern void vPortExitCritical( void );
 
-#define portDISABLE_INTERRUPTS()                               \
-    {                                                          \
-        __set_BASEPRI( configMAX_SYSCALL_INTERRUPT_PRIORITY ); \
-        __DSB();                                               \
-        __ISB();                                               \
-    }
+#if( configENABLE_ERRATA_837070_WORKAROUND == 1 )
+    #define portDISABLE_INTERRUPTS()                               \
+        {                                                          \
+            __disable_interrupt();                                 \
+            __set_BASEPRI( configMAX_SYSCALL_INTERRUPT_PRIORITY ); \
+            __DSB();                                               \
+            __ISB();                                               \
+            __enable_interrupt();                                  \
+        }
+#else
+    #define portDISABLE_INTERRUPTS()                               \
+        {                                                          \
+            __set_BASEPRI( configMAX_SYSCALL_INTERRUPT_PRIORITY ); \
+            __DSB();                                               \
+            __ISB();                                               \
+        }
+#endif
 
 #define portENABLE_INTERRUPTS()                   __set_BASEPRI( 0 )
 #define portENTER_CRITICAL()                      vPortEnterCritical()
